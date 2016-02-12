@@ -1,0 +1,43 @@
+---
+title: "Task1 - Introduction to R Markdown"
+author: "Monika Stanislovėnaitė, EKO"
+date: "2016-02-09"
+output: html_document
+---
+---
+
+R Markdown is an authoring format that enables easy creation of dynamic documents, presentations, and reports from R. It combines the core syntax of markdown (an easy-to-write plain text format) with embedded R code chunks that are run so their output can be included in the final document. R Markdown documents are fully reproducible (they can be automatically regenerated whenever underlying R code or data changes).
+
+Use an asterisk mark, to provide emphasis such as *italics* and **bold**.
+
+Create lists with a dash:
+
+- Item 1
+- Item 2
+- Item 3
+
+You can write `in-line` code with a back-tick.
+
+```
+Code blocks display
+with fixed-width font
+```
+
+> Blockquotes are offset
+
+With R Markdown, you can insert R code chunks:
+
+```{r}
+#quick summary
+summary(cars)
+```
+
+You can also include plots:
+
+```{r, echo=FALSE}
+plot(cars)
+```
+
+> Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+Source: http://rmarkdown.rstudio.com/
