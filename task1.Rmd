@@ -1,6 +1,6 @@
 ---
 title: "Task1 - Introduction to R Markdown"
-author: "Monika Stanislovenaite, EKO"
+author: "Monika Stanislovėnaitė, EKO"
 date: "2016-02-09"
 output: html_document
 ---
