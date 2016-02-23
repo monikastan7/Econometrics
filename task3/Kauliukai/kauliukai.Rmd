@@ -1,0 +1,36 @@
+---
+title: "Task3 - Kauliukai"
+author: "Monika Stanislovėnaitė, EKO"
+date: "2016-02-23"
+output: html_document
+---
+---
+
+**Užduotis:**
+Pirmasis žaidėjas meta vieną kauliuką ir fiksuojamas atsivertusių taškų skaičius. Antrasis žaidėjas meta du kauliukus ir fiksuojamas dydis: max(x_1, x_2)-1, kur x_1 ir x_2 žymi pirmojo ir antrojo kauliukų iškritusių akių skaičių. Jeigu žaidėjų gautų taškų skaičiai yra lygūs, tai eksperimentas kartojamas iš naujo (ir taip kartojama tol, kol galiausiai nustatomas laimėtojas). Kokia tikimybė laimėti pirmajam žaidėjui?
+
+```{r}
+kaul <- function()
+  {
+    # Fiksuojame pirmo žaidėjo atsivertusių taškų skaičių:
+    z1 <- sample(6, size=1, replace=TRUE)
+
+    # Antro žaidėjo mesti kauliukai:
+    z2 <- max(sample(6, size=2, replace=TRUE)) - 1
+    
+    while (z1 == z2)      # kartojama, jei skaičiai lygūs
+      {
+       z1 <- sample(6, size=1, replace=TRUE)
+       z2 <- max((sample(6, size=1, replace=TRUE)),
+              (sample(6, size=1, replace=TRUE))) - 1
+      }
+    z1 > z2   # gauname TRUE arba FALSE
+  }
+```
+
+Eksperimentą kartojame 1000 kartų:
+```{r}
+sim <- replicate(1000, kaul())
+sim
+mean(sim) # gauname tikimybę laimėti pirmajam žaidėjui - apskaičiuoja santykį.
+```
