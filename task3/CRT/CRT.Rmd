@@ -1,0 +1,34 @@
+---
+title: "Task3 - CRT"
+author: "Monika Stanislovėnaitė, EKO"
+date: "2016-02-23"
+output: html_document
+---
+---
+
+**Užduotis:**
+Generuojame n atsitiktinių dydžių turinčių Beta skirstinį su parametrais alpha=beta=0.5. Iš šių atsitiktinių dydžių suskaičiuojamas aritmetinis vidurkis. Kaip atrodo vidurkio tankis, kai n=100? 
+---
+```{r}
+# funkcija, generuojanti atsitiktinius dydžius, turinčius Beta skirstinį:
+genbeta <- function(n)
+   aa = replicate(10000, mean(rbeta(n, 0.5, 0.5)))
+
+x = seq(-2, 2, by=0.01)
+
+# palyginimui sugeneruojame, kai n=2:
+sim = genbeta(2)
+# išbrėžiame histogramą, tankio funkciją ir palyginame su teoriniu tankiu:
+hist(sim, probability = TRUE, main = "Vidurkio histograma ir tankis")
+lines(density(sim), lwd="3", col="blue")
+curve(dnorm(x, mean=mean(sim), sd=sd(sim)), lwd=2, col=2, add=TRUE)
+
+# dabar sugeneruojame, kai n=100:
+sim2 = genbeta(100)
+# išbrėžiame histogramą, tankio funkciją ir palyginame su teoriniu tankiu:
+hist(sim2, probability = TRUE, main = "Vidurkio histograma ir tankis")
+lines(density(sim2), lwd="3", col="blue")
+curve(dnorm(x, mean=mean(sim2), sd=sd(sim2)), lwd=2, col=2, add=TRUE)
+```
+
+Iš histogramos matome, kad vidurkio tankis yra panašus į normalųjį. Didėjant n skirstinys panašėja į normalųjį. Tai užtikrina CRT.
