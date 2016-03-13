@@ -9,14 +9,14 @@ output: html_document
 **Užduotis:**
 Aplanke task4 yra duomenų failas, kuriame rasite nekilnojamo turto (o tiksliau gyvenamųjų butų) kainas ir kaikurias jų charakteristikas. Jūsų užduotis atlikti išsamią tiesinę regresiją. Lygtis reikalinga prekyboms agentams, kad geriau suprastų kokią įtaką skirtingos charakteristikos daro galutinei kainai.
 
-1. Nuskaitome duomenis:
+Nuskaitome duomenis:
 ```{r}
 getwd()
 duom <- read.csv2("data.csv")
 attach(duom)
 ```
 
-2. Randame visas išskirtis (išskyrus aukštų) ir jas išspausdiname:
+Randame visas išskirtis (išskyrus aukštų) ir jas išspausdiname:
 ```{r}
 i1kaina <- boxplot(kaina)$out;                        i1kaina
 i2plotas <- boxplot(plotas)$out;                      i2plotas
@@ -25,7 +25,7 @@ i4silumoslaid <- boxplot(silumosLaidumas)$out;        i4silumoslaid
 i5atstumas <- boxplot(atstumasIkiPrekybosCentro)$out; i5atstumas
 ```
 
-3. Naudojame funkciją *match* (ji ras eilučių, kuriose randasi išskirtys, numerius). Eilučių numerius sujungiame į vieną vektorių ir iš pradinių duomenų panaikiname išskirtis:
+Naudojame funkciją *match* (ji ras eilučių, kuriose randasi išskirtys, numerius). Eilučių numerius sujungiame į vieną vektorių ir iš pradinių duomenų panaikiname išskirtis:
 ```{r}
 k <- match(i1kaina, duom[,"kaina"]) 
 p <- match(i2plotas, duom[,"plotas"])
@@ -37,12 +37,12 @@ vekt  # išskirtys, kurias šalinsime
 duom2 <- duom[-vekt,]  # pašaliname
 ```
 
-4. Pažiūrime, ar duomenys koreliuoti:
+Pažiūrime, ar duomenys koreliuoti:
 ```{r}
 cor(duom2)
 ```
 
-5. Matome, kad stipriai koreliuoja garso izoliacija ir šilumos laidumas, $$cor=0.95$$. Kad būsimame modelyje nebūtų multikolinearumo, turėsime panaikinti garso izoliacijos arba šilumos laidumo stulpelį, bet prieš tai dar pasižiūrime, kaip atrodytų modelis su įtrauktais abiem šiais koreliuotais kintamaisiais:
+Matome, kad stipriai koreliuoja garso izoliacija ir šilumos laidumas, $$cor=0.95$$. Kad būsimame modelyje nebūtų multikolinearumo, turėsime panaikinti garso izoliacijos arba šilumos laidumo stulpelį, bet prieš tai dar pasižiūrime, kaip atrodytų modelis su įtrauktais abiem šiais koreliuotais kintamaisiais:
 ```{r}
 install.packages("car")
 library(car)
@@ -51,43 +51,43 @@ mod1 <- lm(kaina ~ plotas+aukstas+silumosLaidumas+garsoIzoliacija+atstumasIkiPre
 summary(mod1)
 ```
 
-6. Patikrinus mod1 VIF matome, kad šilumos laidumo ir garso izoliacijos VIF'ai yra arti 10, vadinasi modelyje egzistuoja multikolinerumas. Dar kartą įsitikinome, kad šie kintamieji koreliuoja:
+Patikrinus mod1 VIF matome, kad šilumos laidumo ir garso izoliacijos VIF'ai yra arti 10, vadinasi modelyje egzistuoja multikolinerumas. Dar kartą įsitikinome, kad šie kintamieji koreliuoja:
 ```{r}
 vif(mod1)
 ```
 
-7. Kuriame antrajį modelį be garso izoliacijos:
+Kuriame antrajį modelį be garso izoliacijos:
 ```{r}
 mod2 <- lm(kaina~plotas+aukstas+silumosLaidumas+atstumasIkiPrekybosCentro, data=duom3)
 summary(mod2)
 ```
 
-8. Kuriame modelį be šilumos laidumo:
+Kuriame modelį be šilumos laidumo:
 ```{r}
 mod3 <- lm(kaina~plotas+aukstas+garsoIzoliacija+atstumasIkiPrekybosCentro, data=duom3)
 summary(mod2)
 ```
 
-9. Abiem atvejais nereikšmingas atstumas iki prekybos centro, tai sukuriame palyginimui dar 2 modelius be šio kintamojo:
+Abiem atvejais nereikšmingas atstumas iki prekybos centro, tai sukuriame palyginimui dar 2 modelius be šio kintamojo:
 ```{r}
 mod4 <- lm(kaina~plotas+aukstas+silumosLaidumas, data=duom3)
 mod5 <- lm(kaina~plotas+aukstas+garsoIzoliacija, data=duom3)
 summary(mod4); summary(mod5)
 ```
 
-9. Abiem atvejais visi kintamieji reikšmingi, tikriname Akaike:
+Abiem atvejais visi kintamieji reikšmingi, tikriname Akaike:
 ```{r}
 AIC(mod4)
 AIC(mod5)
 # mod5 yra geresnis pagal šį kriterijų
 ```
 
-10. Galutinis modelis:
+Galutinis modelis:
 ```{r}
 mod5 <- lm(kaina~plotas+aukstas+garsoIzoliacija, data=duom3)
 summary(mod5)
 ```
-
+Tikriname heteroskedastiškumą:
 ```{r}
 install.packages("lmtest")
 library(lmtest)
