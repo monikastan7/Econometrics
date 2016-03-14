@@ -44,7 +44,6 @@ cor(duom2)
 
 Matome, kad stipriai koreliuoja garso izoliacija ir šilumos laidumas, $$cor=0.95$$. Kad būsimame modelyje nebūtų multikolinearumo, turėsime panaikinti garso izoliacijos arba šilumos laidumo stulpelį, bet prieš tai dar pasižiūrime, kaip atrodytų modelis su įtrauktais abiem šiais koreliuotais kintamaisiais:
 ```{r}
-install.packages("car")
 library(car)
 attach(duom2)
 mod1 <- lm(kaina ~ plotas+aukstas+silumosLaidumas+garsoIzoliacija+atstumasIkiPrekybosCentro, data = duom2)
@@ -87,10 +86,9 @@ Galutinis modelis:
 mod5 <- lm(kaina~plotas+aukstas+garsoIzoliacija, data=duom3)
 summary(mod5)
 ```
-Tikriname heteroskedastiškumą:
+Tikriname heteroskedastiškumą (prieš tai gali tekti susiinstaliuoti "lmtest"):
 ```{r}
-install.packages("lmtest")
 library(lmtest)
 bptest(mod5)
-# p-value < 0.05, vadinasi duomenys nėra heteroskedastiški.
+# p-value < 0.05, vadinasi duomenys yra homoskedastiški.
 ```
