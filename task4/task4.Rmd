@@ -9,69 +9,65 @@ output: html_document
 **Užduotis:**
 Aplanke task4 yra duomenų failas, kuriame rasite nekilnojamo turto (o tiksliau gyvenamųjų butų) kainas ir kaikurias jų charakteristikas. Jūsų užduotis atlikti išsamią tiesinę regresiją. Lygtis reikalinga prekyboms agentams, kad geriau suprastų kokią įtaką skirtingos charakteristikos daro galutinei kainai.
 
+---
+
 Nuskaitome duomenis:
 ```{r}
-getwd()
+setwd("U:/Econometrics/task4")
 duom <- read.csv2("data.csv")
 attach(duom)
 ```
 
-Randame visas išskirtis (išskyrus aukštų) ir jas išspausdiname:
+Nubrėžiame duomenų grafikus. Pažiūrime, ar duomenys koreliuoti:
 ```{r}
-i1kaina <- boxplot(kaina)$out;                        i1kaina
-i2plotas <- boxplot(plotas)$out;                      i2plotas
-i3garsoiz <- boxplot(garsoIzoliacija)$out;            i3garsoiz
-i4silumoslaid <- boxplot(silumosLaidumas)$out;        i4silumoslaid
-i5atstumas <- boxplot(atstumasIkiPrekybosCentro)$out; i5atstumas
+plot(duom)
+cor(duom)
 ```
 
-Naudojame funkciją *match* (ji ras eilučių, kuriose randasi išskirtys, numerius). Eilučių numerius sujungiame į vieną vektorių ir iš pradinių duomenų panaikiname išskirtis:
-```{r}
-k <- match(i1kaina, duom[,"kaina"]) 
-p <- match(i2plotas, duom[,"plotas"])
-g <- match(i3garsoiz, duom[,"garsoIzoliacija"])
-s <- match(i4silumoslaid, duom[,"silumosLaidumas"])
-a <- match(i5atstumas, duom[,"atstumasIkiPrekybosCentro"])
-vekt <- c(k, p, g, s, a)
-vekt  # išskirtys, kurias šalinsime
-duom2 <- duom[-vekt,]  # pašaliname
-```
-
-Pažiūrime, ar duomenys koreliuoti:
-```{r}
-cor(duom2)
-```
-
-Matome, kad stipriai koreliuoja garso izoliacija ir šilumos laidumas, $$cor=0.95$$. Kad būsimame modelyje nebūtų multikolinearumo, turėsime panaikinti garso izoliacijos arba šilumos laidumo stulpelį, bet prieš tai dar pasižiūrime, kaip atrodytų modelis su įtrauktais abiem šiais koreliuotais kintamaisiais:
+Matome, kad stipriai koreliuoja garso izoliacija ir šilumos laidumas (cor=0.95). Kad būsimame modelyje nebūtų multikolinearumo, turėsime panaikinti garso izoliacijos arba šilumos laidumo stulpelį, bet prieš tai dar pasižiūrime, kaip atrodytų modelis su įtrauktais abiem šiais koreliuotais kintamaisiais ir neišėmus išskirčių:
 ```{r}
 library(car)
-attach(duom2)
-mod1 <- lm(kaina ~ plotas+aukstas+silumosLaidumas+garsoIzoliacija+atstumasIkiPrekybosCentro, data = duom2)
+mod1 <- lm(kaina ~ plotas+aukstas+silumosLaidumas+garsoIzoliacija+atstumasIkiPrekybosCentro)
 summary(mod1)
 ```
 
-Patikrinus mod1 VIF matome, kad šilumos laidumo ir garso izoliacijos VIF'ai yra arti 10, vadinasi modelyje egzistuoja multikolinerumas. Dar kartą įsitikinome, kad šie kintamieji koreliuoja:
+Patikrinus mod1 VIF matome, kad šilumos laidumo ir garso izoliacijos VIF'ai yra dideli, vadinasi modelyje egzistuoja multikolinerumas. Dar kartą įsitikinome, kad šie kintamieji koreliuoja:
 ```{r}
 vif(mod1)
 ```
 
-Kuriame antrajį modelį be garso izoliacijos:
+Pažiūrime, kur yra šio modelio išskirtys:
 ```{r}
-mod2 <- lm(kaina~plotas+aukstas+silumosLaidumas+atstumasIkiPrekybosCentro, data=duom3)
+outlierTest(mod1) #funkcija parodo, kad išskirtys yra 253 ir 254 eilutėse
+```
+
+Kadangi mod1 yra multikolinearus, kuriame antrajį modelį be garso izoliacijos:
+```{r}
+mod2 <- lm(kaina~plotas+aukstas+silumosLaidumas+atstumasIkiPrekybosCentro, data = duom)
+```
+
+Ieškome išskirčių:
+```{r}
+outlierTest(mod2) #išskirtys vėl eilutėse nr. 253 ir 254
+duom2 <- duom[-c(253,254),] #panaikiname išskirtis
+
+mod2_isk <- lm(kaina~plotas+aukstas+silumosLaidumas+atstumasIkiPrekybosCentro, data = duom2)
+plot(mod2_isk) #tolimų išskirčių nebematome
+summary(mod2_isk)
+```
+
+Kuriame modelį be šilumos laidumo (naudojame duomenis su prieš tai pašalintomis išskirtimis):
+```{r}
+mod3 <- lm(kaina~plotas+aukstas+garsoIzoliacija+atstumasIkiPrekybosCentro, data=duom2)
 summary(mod2)
 ```
 
-Kuriame modelį be šilumos laidumo:
+Matome, kad abiem atvejais yra nereikšmingas atstumas iki prekybos centro, tai sukuriame palyginimui dar 2 modelius be šio kintamojo:
 ```{r}
-mod3 <- lm(kaina~plotas+aukstas+garsoIzoliacija+atstumasIkiPrekybosCentro, data=duom3)
-summary(mod2)
-```
-
-Abiem atvejais nereikšmingas atstumas iki prekybos centro, tai sukuriame palyginimui dar 2 modelius be šio kintamojo:
-```{r}
-mod4 <- lm(kaina~plotas+aukstas+silumosLaidumas, data=duom3)
-mod5 <- lm(kaina~plotas+aukstas+garsoIzoliacija, data=duom3)
-summary(mod4); summary(mod5)
+mod4 <- lm(kaina~plotas+aukstas+silumosLaidumas, data=duom2)
+summary(mod4)
+mod5 <- lm(kaina~plotas+aukstas+garsoIzoliacija, data=duom2)
+summary(mod5)
 ```
 
 Abiem atvejais visi kintamieji reikšmingi, tikriname Akaike:
@@ -81,14 +77,30 @@ AIC(mod5)
 # mod5 yra geresnis pagal šį kriterijų
 ```
 
-Galutinis modelis:
+Toliau dirbsime su mod5:
 ```{r}
-mod5 <- lm(kaina~plotas+aukstas+garsoIzoliacija, data=duom3)
-summary(mod5)
+mod5 <- lm(kaina~plotas+aukstas+garsoIzoliacija, data=duom2)
 ```
-Tikriname heteroskedastiškumą (prieš tai gali tekti susiinstaliuoti "lmtest"):
+
+Tikriname heteroskedastiškumą (reikės paketo "lmtest"):
 ```{r}
 library(lmtest)
 bptest(mod5)
 # p-value < 0.05, vadinasi duomenys yra homoskedastiški.
 ```
+
+Tikriname liekanų normalumą:
+```{r}
+hist(mod5$res) #Iš histogramos liekanos atrodo normalios 
+shapiro.test(mod5$res) # Patikriname su shapiro.test
+#p-value>0.05, vadinasi paklaidos iš tiesų yra normalios.
+```
+
+Tikriname, ar nėra autokoreliacijos:
+```{r}
+durbinWatsonTest(mod5)
+#p-value > 0.05, vadinasi liekanos nėra autokoreliuotos.
+```
+
+> Taigi, galutinis modelis: $$kaina = 7474.4 + 599.44 plotas + 333.97 aukstas + 581.21 garsoizoliacija + \varepsilon$$
+
