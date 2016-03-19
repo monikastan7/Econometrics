@@ -1,0 +1,56 @@
+---
+title: "Task5"
+author: "Monika Stanislovėnaitė, EKO"
+date: "2016-03-19"
+output: html_document
+---
+---
+
+**Užduotis:**
+Pinigų paklausa. Šioje užduotyje reikia atlikti tiesinę regresiją. Pakete dynlm yra duomenų masyvas M1Germany - ten yra ir jo aprašymas. Iš turimų duomenų sudarykite ir įvertinkite tiesinę regresiją, kurios endogeninis kintamasis yra logm1. Lygtis būtų naudojama prognozuoti pinigų kiekį artimiausiam laikotarpiui į prieki remiantis dabartine situacija. Taigi prognozės sudarymui lygtis gali naudoti tik tuos duomenis, kurie būtų žinomi prognozavimo momentu.
+
+Pažiūrime duomenis, esančius pakete dynlm:
+```{r}
+library(dynlm)
+M1Germany
+```
+
+Pažiūrime grafikus:
+```{r,echo=FALSE}
+plot(M1Germany)
+```
+
+Išbandome įvairius modelių variantus. Keli variantai, kur gaunasi visi reikšmingi kintamieji:
+```{r}
+mod1 <- dynlm(logm1 ~ L(logprice,2)+(L(loggnp, 2))+(L(interest,2)) , data = M1Germany)
+summary(mod1)
+mod2 <- dynlm(logm1 ~ L(logprice,3)+(L(loggnp, 2))+(L(interest,1)) , data = M1Germany) 
+summary(mod2)
+mod3 <- dynlm(logm1 ~ L(logprice,3)+(L(loggnp, 2))+(L(interest,2)) , data = M1Germany)
+summary(mod3)
+mod4 <- dynlm(logm1 ~ L(logprice,1)+(L(interest,3)) , data = M1Germany) 
+summary(mod4)
+mod5 <- dynlm(logm1 ~ L(logprice,2)+(L(interest,3)) , data = M1Germany) 
+summary(mod5)
+mod6 <- dynlm(logm1 ~ L(logprice,5)+(L(interest,5)) , data = M1Germany) 
+summary(mod6)
+mod7 <- dynlm(logm1 ~ (L(loggnp, 1))+(L(interest,1)) , data = M1Germany)
+summary(mod7)
+mod8 <- dynlm(logm1 ~ (L(loggnp, 2))+(L(interest,3)) , data = M1Germany)
+summary(mod8)
+```
+
+Palyginame modelius pagal AIC krijerijų:
+```{r}
+AIC(mod1)
+AIC(mod2)
+AIC(mod3)
+AIC(mod4)
+AIC(mod5)
+AIC(mod6)
+AIC(mod7)
+AIC(mod8)
+```
+
+Mod3 yra geriausias, nes turi mažiausią AIC.
+
