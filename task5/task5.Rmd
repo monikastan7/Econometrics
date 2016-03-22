@@ -90,4 +90,5 @@ shapiro.test(liek)
 
 p-value > 0.05, vadinasi iš tiesų liekanos yra normalios.
 
-> Taigi, mod4 yra tiksliausias: `mod4 <- dynlm(logm1 ~  d(L(logm1, 1))+L(logprice,1)+L(interest,3) , data = M1Germany)`
+> Taigi, mod4 yra tiksliausias:
+`mod4 <- dynlm(logm1 ~  d(L(logm1, 1))+L(logprice,1)+L(interest,3) , data = M1Germany)`
