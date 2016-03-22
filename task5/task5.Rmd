@@ -9,35 +9,59 @@ output: html_document
 **Užduotis:**
 Pinigų paklausa. Šioje užduotyje reikia atlikti tiesinę regresiją. Pakete dynlm yra duomenų masyvas M1Germany - ten yra ir jo aprašymas. Iš turimų duomenų sudarykite ir įvertinkite tiesinę regresiją, kurios endogeninis kintamasis yra logm1. Lygtis būtų naudojama prognozuoti pinigų kiekį artimiausiam laikotarpiui į prieki remiantis dabartine situacija. Taigi prognozės sudarymui lygtis gali naudoti tik tuos duomenis, kurie būtų žinomi prognozavimo momentu.
 
+---
+
 Pažiūrime duomenis, esančius pakete dynlm:
 ```{r}
 library(dynlm)
+library(car)
 M1Germany
+cor(M1Germany, use = "na.or.complete") #matome, kad logprice ir loggnp smarkiai koreliuoja
 ```
 
 Pažiūrime grafikus:
-```{r,echo=FALSE}
+```{r}
 plot(M1Germany)
 ```
 
-Išbandome įvairius modelių variantus. Keli variantai, kur gaunasi visi reikšmingi kintamieji:
+Išbandome vieną modelį, patikriname vif:
 ```{r}
-mod1 <- dynlm(logm1 ~ L(logprice,2)+(L(loggnp, 2))+(L(interest,2)) , data = M1Germany)
+modelis <- dynlm(logm1 ~ L(logprice, 2) + (L(loggnp, 2)) + (L(interest,2)), data = M1Germany)
+summary(modelis)
+vif(modelis)
+```
+
+Iš vif matome, kad modelis yra multikolinearus. Kad panaikinti multikolinearumą naudosime funkcija d() ("lagged differences"), kuri pašalina trendus.
+
+Išbandome įvairius modelių variantus. Keli variantai, kur gaunasi visi reikšmingi kintamieji ir geri vif'ai:
+```{r}
+mod1 <- dynlm(logm1 ~ L(logprice, 2) + d(L(loggnp, 2)) + L(interest, 1), data = M1Germany)
 summary(mod1)
-mod2 <- dynlm(logm1 ~ L(logprice,3)+(L(loggnp, 2))+(L(interest,1)) , data = M1Germany) 
+vif(mod1)
+
+mod2 <- dynlm(logm1 ~ L(logprice, 3) + d(L(loggnp, 2)) + L(interest, 1), data = M1Germany) 
 summary(mod2)
-mod3 <- dynlm(logm1 ~ L(logprice,3)+(L(loggnp, 2))+(L(interest,2)) , data = M1Germany)
+vif(mod2)
+
+mod3 <- dynlm(logm1 ~ L(logprice, 3) + d(L(loggnp, 2)) + L(interest, 2), data = M1Germany)
 summary(mod3)
-mod4 <- dynlm(logm1 ~ L(logprice,1)+(L(interest,3)) , data = M1Germany) 
+vif(mod3)
+
+mod4 <- dynlm(logm1 ~  d(L(logm1, 1)) + L(logprice, 1) + L(interest, 3), data = M1Germany) 
 summary(mod4)
-mod5 <- dynlm(logm1 ~ L(logprice,2)+(L(interest,3)) , data = M1Germany) 
+vif(mod4)
+
+mod5 <- dynlm(logm1 ~ L(logprice, 2) + L(interest, 3), data = M1Germany) 
 summary(mod5)
-mod6 <- dynlm(logm1 ~ L(logprice,5)+(L(interest,5)) , data = M1Germany) 
+vif(mod5)
+
+mod6 <- dynlm(logm1 ~ d(L(logm1, 2)) + L(logprice, 5) + L(interest, 5), data = M1Germany) 
 summary(mod6)
-mod7 <- dynlm(logm1 ~ (L(loggnp, 1))+(L(interest,1)) , data = M1Germany)
+vif(mod6)
+
+mod7 <- dynlm(logm1 ~ L(loggnp, 1) + L(interest, 1), data = M1Germany)
 summary(mod7)
-mod8 <- dynlm(logm1 ~ (L(loggnp, 2))+(L(interest,3)) , data = M1Germany)
-summary(mod8)
+vif(mod7)
 ```
 
 Palyginame modelius pagal AIC krijerijų:
@@ -49,8 +73,21 @@ AIC(mod4)
 AIC(mod5)
 AIC(mod6)
 AIC(mod7)
-AIC(mod8)
 ```
 
-Mod3 yra geriausias, nes turi mažiausią AIC.
+Mod4 yra geriausias, nes turi mažiausią AIC.
 
+Patikriname liekanų normalumą įsitikinimui, kad mod4 tikrai yra geras:
+```{r}
+#pasiziurime is histogramos:
+hist(resid(mod4), probability = TRUE)
+lines(density(resid(mod4)), col = "blue", lwd = 3)
+
+#patikriname normaluma su shapiro testu:
+liek <- as.vector(mod4$residuals)
+shapiro.test(liek)
+```
+
+p-value > 0.05, vadinasi iš tiesų liekanos yra normalios.
+
+> Taigi, mod4 yra tiksliausias: `mod4 <- dynlm(logm1 ~  d(L(logm1, 1))+L(logprice,1)+L(interest,3) , data = M1Germany)`
