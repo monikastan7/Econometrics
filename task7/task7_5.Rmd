@@ -1,0 +1,80 @@
+---
+title: "Task7_5"
+author: "Monika Stanislovėnaitė, EKO"
+date: "2016-04-05"
+output: html_document
+---
+---
+[@Hyndman2014a, ch. 2. The forecaster’s toolbox, Lab Session 2]
+
+**Lab Session 2, užduotis nr. 5**  
+Consider the sales of new one-family houses in the USA (Jan 1987 – Nov 1995). Data set: hsales.  
+(a) Produce some plots of the data in order to become familiar with it.  
+(b) Split the data into a training set and a test set, where the test set is the last two years of data.  
+(c) Try various benchmark methods to forecast the training set and compare the results on the test set. Which method did best?  
+(d) For the best method, compute the residuals and plot them. What do the plots tell you?  
+(e) Can you invent a better forecasting method than any of the benchmark methods for these data?  
+  
+    
+Užduočiai reikės paketo fpp:
+```{r}
+library(fpp)
+```
+
+Naudosime duomenis *hsales*:
+```{r}
+d <- hsales
+```
+
+**(a)** Produce some plots of the data in order to become familiar with it:
+```{r}
+tsdisplay(d, plot.type="scatter")
+```
+  
+Galimas kasmetinis sezoniškumas, matome is grafiko ir ACF (ACF "pikai" ties 1, 12, 24). Ciklai - "bangos" laikotarpiais 1975-1982, 1982-1992, 1992-1995. Trendo nėra - to nerodo nei grafikas, nei ACF.
+
+**(b)** Split the data into a training set and a test set, where the test set is the last two years of data:
+```{r}
+hsales1 <- window(d, end=1993.99)
+hsales2 <- window(d, start=1994)
+```
+
+**(c)** Try various benchmark methods to forecast the training set and compare the results on the test set. Which method did best?
+```{r}
+##isbandysime visus metodus - drift, mean, naive ir seasonal naive.
+#mean metodas (forecast of all future values is equal to mean of historical data):
+mean <- meanf(hsales1, h=27)
+plot(mean)
+#naive metodas (forecasts equal to last observed value):
+naive <- naive(hsales1, h=27)
+plot(naive)
+#seasonal naive metodas (forecasts equal to last value from same season):
+snaive <- snaive(hsales1, h=27)
+plot(snaive)
+#drift metodas (forecasts equal to last value plus average change):
+drift <- rwf(hsales1, drift=TRUE, h=27)
+plot(drift)
+
+#we'll compare the accuracy of forecasts against the actual values stored in hsales2:
+accuracy(mean, hsales2)
+accuracy(naive, hsales2)
+accuracy(snaive, hsales2)
+accuracy(drift, hsales2)
+```
+Remiantis *accuracy* funkcija, geriausi metodai atrodo *naive* ir *drift*. Rinksimės **drift** metodą kaip geriausią, nes jis duoda dar ir tendenciją mažėti (nors ir labai mažą).
+
+**(d)** For the best method, compute the residuals and plot them. What do the plots tell you?
+```{r}
+res <- residuals(drift)
+plot(res)
+shapiro.test(res)
+hist(res, breaks="FD")
+Acf(res)
+Box.test(res, fitdf=0, type="Lj") #atmetame Ho => liekanos nėra baltasis triukšmas.
+```
+Pagal *shapiro.test* liekanos nėra normalios, bet šiuo atveju galime nežiūrėti taip griežtai ir atsižvelgi tik į histogramos formą ir teigti, kad liekanos yra normaliai pasiskirsčiusios.
+Iš ACF galime numatyti, kad liekanos nėra baltasis triukšmas, tai patvirtina ir *Box.test*
+
+**(e)** Can you invent a better forecasting method than any of the benchmark methods for these data?
+
+Galime sugalvoti geresnį prognozavimo modelį, nes liekanos nėra baltasis triukšmas, t.y. jose dar yra informacijos. Taip pat užduotyje naudoti 4 metodai yra patys paprasčiausi, yra ir geresnių.
