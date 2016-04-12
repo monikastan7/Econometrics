@@ -54,20 +54,20 @@ Naudosime duomenis *bricksq*:
 duom <- bricksq
 ```
 
-(a) We will split the data into two parts:
+**(a)** We will split the data into two parts:
 ```{r}
 bricks1 <- window(bricksq, end=1987.99)
 bricks2 <- window(bricksq, start=1988)
 ```
 
-(b) We will check that data have been split appropriately by producing the following plot:
+**(b)** We will check that data have been split appropriately by producing the following plot:
 ```{r}
 plot(bricksq)
 lines(bricks1,col="red")
 lines(bricks2,col="blue")
 ```
 
-(c) We will calculate forecasts using each of the four benchmark methods applied to *bricks1*:
+**(c)** We will calculate forecasts using each of the four benchmark methods applied to *bricks1*:
 ```{r}
 ##isbandysime visus metodus - drift, mean, naive ir seasonal naive.
 #mean metodas (forecast of all future values is equal to mean of historical data):
@@ -80,7 +80,7 @@ fsnaive <- snaive(bricks1, h=27)
 fdrift <- rwf(bricks1, drift=TRUE, h=27)
 ```
 
-(d) We will compare the accuracy of forecasts against the actual values stored in *bricks2*:
+**(d)** We will compare the accuracy of forecasts against the actual values stored in *bricks2*:
 ```{r}
 accuracy(fmean, bricks2)
 accuracy(fnaive, bricks2)
@@ -88,14 +88,14 @@ accuracy(fsnaive, bricks2)
 accuracy(fdrift, bricks2)
 ```
 
-(e) Which method does best? Why?
+**(e)** Which method does best? Why?
 Geriausias metodas prognozavimui šiuo atveju yra **seasonal naive** metodas, nes jis turi mažiausius RMSE, MAE, MAPE, MASE. Taip pat iš grafiko galime pastebėti, kad duomenys yra sezoniniai, o **seasonal naive** metodas ir atsižvelgia į sezoniškumą.Kad yra kasmetinis sezoniškumas galime įsitikinti ir su *ACF*:
 ```{r}
 acf(duom)
 #"pikai" ties 1, 2, 3, ...
 ```
 
-(f) For the best method, compute the residuals and plot them. Do the residuals appear to be uncorrelated and normally distributed?
+**(f)** For the best method, compute the residuals and plot them. Do the residuals appear to be uncorrelated and normally distributed?
 ```{r}
 res <- residuals(fsnaive)
 plot(res)
