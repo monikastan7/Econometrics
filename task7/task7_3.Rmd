@@ -40,10 +40,11 @@ plot(res)
 hist(res, breaks="FD")
 Acf(res)
 ```
-Do the residuals appear to be uncorrelated and normally distributed?
+Do the residuals appear to be uncorrelated and normally distributed?  
 
-
-
+---
+---
+**Sprendimas:**  
 Užduočiai reikės paketo **fpp**:
 ```{r}
 library(fpp)
