@@ -14,8 +14,9 @@ Consider the sales of new one-family houses in the USA (Jan 1987 – Nov 1995). 
 (c) Try various benchmark methods to forecast the training set and compare the results on the test set. Which method did best?  
 (d) For the best method, compute the residuals and plot them. What do the plots tell you?  
 (e) Can you invent a better forecasting method than any of the benchmark methods for these data?  
-  
-    
+
+---  
+---    
 Užduočiai reikės paketo fpp:
 ```{r}
 library(fpp)
