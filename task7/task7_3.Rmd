@@ -7,7 +7,7 @@ output: html_document
 ---
 [@Hyndman2014a, ch. 2. The forecaster’s toolbox, Lab Session 2]
 
-**Lab Session 2, užduotis nr. 3**
+**Lab Session 2, užduotis nr. 3**  
 For the data set **bricksq**:
 
 (a) Split the data into two parts using: 
@@ -101,6 +101,8 @@ res <- residuals(fsnaive)
 plot(res)
 hist(res, breaks="FD") #iš grafiko atrodo, kad liekanos normaliai pasiskirsčiusios
 shapiro.test(res) # tačiau pritaikę testą gauname, kad liekanos nėra normalios
+#vis dėlto nežiūrėsime taip griežtai, žiūrėsime tik į formą ir teigsime, kad liekanos normalios
 Acf(res) #for uncorrelated data, we would expect each autocorrelation to be close to 0
-#95% reikšmių turėtų neišeiti už kritinių reikšmių ribų, iš ACF matome, kad nemažai reikšmių išeina už krinitių reikšmių, tai greičiausiai liekanos yra koreliuotos.
+#95% reikšmių turėtų neišeiti už kritinių reikšmių ribų, iš ACF matome, kad nemažai reikšmių išeina už kritinių reikšmių, tai greičiausiai liekanos yra koreliuotos.
+Box.test(res, fitdf=0, type="Lj") #atmetame Ho => liekanos iš tiesų nėra baltasis triukšmas (yra koreliuotos).
 ```
