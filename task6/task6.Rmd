@@ -7,25 +7,25 @@ output: html_document
 ---
 [@Hyndman2014a, ch. 1. Introduction to forecasting, Lab Session 1]
 
-**Lab Session 1, uzduotis nr. 1**
-Use the Dow Jones index (data set dowjones) to do the following:
-(a) Produce a time plot of the series.
-(b) Produce forecasts using the drift method and plot them.
-(c) Show that the graphed forecasts are identical to extending the line drawn between the first and last observations.
-(d) Try some of the other benchmark functions to forecast the same data set. Which do you think is best? Why?
-
+###Lab Session 1, uzduotis nr. 1  
+Use the Dow Jones index (data set dowjones) to do the following:  
+(a) Produce a time plot of the series.  
+(b) Produce forecasts using the drift method and plot them.  
+(c) Show that the graphed forecasts are identical to extending the line drawn between the first and last observations.  
+(d) Try some of the other benchmark functions to forecast the same data set. Which do you think is best? Why?  
+  
 Uzduociai reikes paketo **fpp**. Duomenys - *dowjones*:
 ```{r}
 library(fpp)
 dowjones
 ```
-
-(a) Produce a time plot of the series:
+  
+**(a)** Produce a time plot of the series:
 ```{r}
 plot(dowjones, col=4, lwd=2, main="Duomenu grafikas")
 ```
-
-(b) Produce forecasts using the drift method and plot them. (Drift method forecasts equal to last value plus average change):
+  
+**(b)** Produce forecasts using the drift method and plot them. (Drift method forecasts equal to last value plus average change):
 ```{r}
 #forecasts:
 f_drift <- rwf(dowjones, drift=TRUE, h=20)  # h - number of periods for forecasting
@@ -33,8 +33,8 @@ f_drift
 #plot:
 plot(f_drift, col=2, lwd=2)
 ```
-
-(c) Show that the graphed forecasts are identical to extending the line drawn between the first and last observations.
+  
+**(c)** Show that the graphed forecasts are identical to extending the line drawn between the first and last observations.
 ```{r}
 #randame pirmo ir pakutinio stebejimo reiksmes:
 st1 <- dowjones[1]
@@ -44,8 +44,8 @@ plot(f_drift, col=2, lwd=2)
 segments(1, st1, 78, st78, col="violet")
 #matome, kad is tiesu drift metodas duoda tiese, gaunama pratesiant linija, einancia per pirmo ir paskutinio stebejimo taskus.
 ```
-
-(d) Try some of the other benchmark functions to forecast the same data set. Which do you think is best? Why?
+  
+**(d)** Try some of the other benchmark functions to forecast the same data set. Which do you think is best? Why?
 ```{r}
 #isbandysime visus metodus - drift, mean, naive ir seasonal naive.
 par(mfrow=c(2,2))
@@ -58,5 +58,6 @@ plot(naive(dowjones, h=20))
 #seasonal naive metodas (forecasts equal to last value from same season):
 plot(snaive(dowjones, h=20))
 ```
-
+  
 **Mano nuomone, prognozems siuo atveju labiausiai tinka naive metodas.** Drift metodas siulo gana staigu kilima, o matome, kad duomenyse yra buve ir mazu reiksmiu. Mean metodas duoda staigu kritima. Seasonal naive metodas cia netinkamas, nes duomenyse nematome sezoniskumo.
+
