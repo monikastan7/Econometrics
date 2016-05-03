@@ -1,0 +1,169 @@
+---
+title: "Task10"
+author: "Monika Stanislovėnaitė, EKO"
+date: "2016-04-19"
+output: html_document
+---
+---
+[@Hyndman2014a, ch. 3., Lab Session 3]
+
+###Lab Session 3, užduotis nr. 1    
+For this exercise, use the price of a dozen eggs in the United States from 1900–1993 (data set eggs). Experiment with the various options in the `holt()` function to see how much the forecasts change with damped or exponential trend. Also try changing the parameter values for $\alpha$ and $\beta$ to see how they affect the forecasts. Try to develop an intuition of what each parameter and argument is doing to the forecasts.  
+[Hint: use h=100 when calling `holt()` so you can clearly see the differences between the various options when plotting the forecasts.]  
+Which model gives the best RMSE?  
+Do the residuals from the best model look like white noise?  
+  
+  
+Užduočiai reikės paketo **fpp**:
+```{r}
+library(fpp)
+```
+
+Duomenys:
+```{r}
+duom <- eggs
+```
+
+Pažiūrime, kaip atrodo duomenys:
+```{r}
+plot(duom, col="purple", lwd=2)
+acf(duom)
+```
+  
+Iš grafiko matome, kad duomenys turi trendą mažėti. ACF lėtai mažėja - tai irgi išduoda trendo buvimą.  
+
+Keli `holt()` variantai:
+```{r}
+fit1 <- holt(duom, h=100)
+plot(fit1, plot.conf=FALSE)
+lines(fitted(fit1), col="blue")
+s1 <- fit1$model  #alpha=0.8469, beta=0.0001
+
+fit2 <- holt(duom, h=100, exponential=TRUE)
+plot(fit2, plot.conf=FALSE)
+lines(fitted(fit2), col="red")
+s2 <- fit2$model #alpha=0.8218, beta=0.0001
+
+fit3 <- holt(duom, h=100, damped=TRUE)
+plot(fit3, plot.conf=FALSE)
+lines(fitted(fit3), col="brown")
+s3 <- fit3$model #alpha=0.8248, beta=0.0018, phi=0.9683
+```
+Matome, kad visuose variantuose $\beta$ yra labai maži, o $\alpha$ yra apie 0.82.  
+  
+Išbandysime variantą, kur $\alpha$ ir $\beta$ reikšmės yra visai kitokios. $\alpha$ sumažinsine, o $\beta$ padidinsime:
+```{r}
+fit4 <- holt(duom, h=100, alpha=0.2, beta=0.2)
+plot(fit4, plot.conf=FALSE)
+lines(fitted(fit4), col=7)
+```
+  
+Matome, kad prognozuojamos reikšmės "pastatėjo", geltona linija nebe taip gerai atitinka duomenis. Galime daryti išvadą, kad kuo $\alpha$ mažesnis, tuo mažiau prognozė atitinka duomenis, mažiau suglodinama. Kai $\beta$ mažesnis, prognozės nuolydis mažesnis.  
+  
+Palyginsime visas prognozes:
+```{r}
+plot(duom, xlim=c(1900,2090), ylim=c(-50,400))
+lines(fit1$mean, col=3)
+lines(fit2$mean, col=2)
+lines(fit3$mean, col=4)
+lines(fit4$mean, col=5)
+legend("topright",lty=1,lwd="1",col=c(3,2,4,5),legend=c("Holt metodas","Holt metodas su ekspon. trendu","Damped Holt metodas","Holt metodas, kai alpha=beta=0.2"))
+```
+
+Pažiūrėsime, kuris modelis duoda geriausią *RMSE*:
+```{r}
+accuracy(fit1)[2]
+accuracy(fit2)[2]
+accuracy(fit3)[2]
+accuracy(fit4)[2]
+```
+Geriausią (mažiausią) RMSE turi **fit1**, t.y. paprastas Holt metodas.
+  
+Pažiūrėsime, ar fit1 liekanos atrodo kaip baltasis triukšmas:
+```{r}
+Acf(fit1$res)
+Box.test(fit1$res, fitdf=0, type="Lj")
+```
+  
+Iš ACF matome, kad liekanos yra baltasis triukšmas, nes praktiškai visos linijos neišeina už kritinių reikšmių ribų. `Box.test()` taip pat tai patvirtina, nes p-value>0.05  
+  
+  
+###Lab Session 3, užduotis nr. 2      
+For this exercise, use the monthly Australian short-term overseas visitors data, May 1985–April 2005. (Data set: visitors.)  
+(a) Make a time plot of your data and describe the main features of the series.  
+(b) Forecast the next two years using Holt-Winters’ multiplicative method.  
+(c) Why is multiplicative seasonality necessary here?  
+(d) Experiment with making the trend exponential and/or damped.  
+(e) Compare the RMSE of the one-step forecasts from the various methods. Which do you prefer?  
+(f) Check that the residuals from the best model look like white noise.  
+
+Užduočiai reikės paketo **fpp**:
+```{r}
+library(fpp)
+```
+
+Duomenys:
+```{r}
+vis <- visitors
+```
+
+**(a)** Make a time plot of your data and describe the main features of the series:
+```{r}
+plot(vis, col="brown")
+```
+  
+Iš grafiko matome, kad duomenys turi trendą didėti, taip pat yra sezoniškumas. Dar galime įžvelgi, kad trendas turi tendenciją po truputį gęsti.
+
+Kad tikrai yra sezoniškumas, galime įsitikinti ir iš ACF - "pikai" ties lagais 1, 12, 24, ..., t.y kasmet:
+```{r}
+Acf(vis)
+```
+
+**(b)** Forecast the next two years using Holt-Winters’ multiplicative method:
+```{r}
+fit1 <- hw(vis, h=24, seasonal="mult")
+plot(fit1, plot.conf=FALSE)
+lines(fitted(fit1), col=2)
+```
+
+**(c)** Why is multiplicative seasonality necessary here?  
+Reikalingas multiplikatyvus sezoniškumas, nes čia naudingiau matuoti ne absoliučius skirtumus, o proporcijas. Iš grafiko matome, kad bėgant metams "bangos" duomenyse tampa vis ilgesnės, t.y didėja svyravimai. Labiau tikėtina yra tai, kad, pavyzdžiui, kiekvienais metais liepos mėnesio reikšmė yra kažkokia proporcija didesnė už sausio mėnesio reikšmę, negu kad skirtumas tarp jų visuomet yra konstanta.  
+
+**(d)** Experiment with making the trend exponential and damped:
+```{r}
+fit2 <- hw(vis, h=24, seasonal="mult", exponential=TRUE)
+plot(fit2, plot.conf=FALSE)
+lines(fitted(fit2), col=2)
+
+fit3 <- hw(vis, h=24, seasonal="mult", damped=TRUE)
+plot(fit3, plot.conf=FALSE)
+lines(fitted(fit3), col=2)
+```
+  
+Matome, kad kai trendas yra *eksponentinis*, prognozės yra linkusios didėti greičiau. Kai trendas yra *damped* atvirkščiai - prognozės didėja lėčiau ir prognozuojant toliau trendas pamažu turėtų nykti.  
+Kad būtų aiškiau ir matytųsi, kaip skiriasi fit1, fit2 ir fit3 prognozės, galime sudėti jas visas į vieną vietą:
+```{r}
+plot(vis, xlim=c(1999,2007), ylim=c(50,650))
+lines(fit1$mean, col=3, lwd=2)
+lines(fit2$mean, col=2)
+lines(fit3$mean, col=4)
+legend("topleft", lty=1, cex=0.8, lwd="1", col=c(3,2,4), legend=c("Holt-Winters' multiplikatyvus metodas","Holt-Winters' mult. metodas su ekspon. trendu","Damped Holt-Winters' mult. metodas"))
+```
+
+**(e)** Compare the RMSE of the one-step forecasts from the various methods. Which do you prefer? 
+```{r}
+accuracy(fit1)[2]
+accuracy(fit2)[2]
+accuracy(fit3)[2]
+```
+Kaip ir buvo galima tikėtis, geriausią RMSE turi **fit3**, t.y. prognozės, kai trendas yra *damped*. Jau iš duomenų grafiko matėme, kad trendas turi tendenciją gęsti, todėl ir Holt-Winters metodas, kai trendas *damped* čia labiausiai tinka.
+
+**(f)** Check that the residuals from the best model look like white noise:
+```{r}
+Acf(fit3$res)
+Box.test(fit3$res, fitdf=0, type="Lj")
+```
+Iš ACF matome, kad liekanos yra baltasis triukšmas, nes praktiškai visos linijos neišeina už kritinių reikšmių ribų. `Box.test()` taip pat tai patvirtina, nes p-value>0.05.  
+
+
+Naudinga informacija: http://www.simafore.com/blog/bid/205420/Time-series-forecasting-understanding-trend-and-seasonality 
