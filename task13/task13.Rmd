@@ -18,14 +18,14 @@ library(fpp)
 
 **(a)** Duomenys *usnetelec*:
 ```{r}
-plot(usnetelec)                        #pažiūrime, kaip atrodo duomenys; duomenys nesezoniniai
+plot(usnetelec, col="blue", lwd=2)     #pažiūrime, kaip atrodo duomenys; duomenys nesezoniniai
 #matome, kad duomenims nelabai reikia transformacijos, bet vis dėlto ją padarysime:
 l1 <- BoxCox.lambda(usnetelec)         #gauname transformacijos parametrą (0.52)
 duom1 <- BoxCox(usnetelec, l1)
-plot(duom1)                            #duomenys po transformacijos
+plot(duom1, col="red")                 #duomenys po transformacijos
 n1 <- ndiffs(duom1)                    #gauname diferencijavimo eilę transformuotiems duomenims (1)
 duom1_1 <- diff(duom1, differences=n1)
-plot(duom1_1)                          #duomenys po diferencijavimo
+plot(duom1_1, col="red")               #duomenys po diferencijavimo
 ```
 
 Atliksime testą patikrinimui, ar šie duomenys yra stacionarūs. Tikrinsime su **Augmented Dickey Fuller test**. (Ho: duomenys nestacionarūs ir nesezoniniai):
@@ -36,13 +36,13 @@ adf.test(duom1_1)
 
 **(b)** Duomenys *usgdp*:
 ```{r}
-plot(usgdp)                              #pažiūrime, kaip atrodo duomenys; duomenys nesezoniniai
+plot(usgdp, col="blue", lwd=2)           #pažiūrime, kaip atrodo duomenys; duomenys nesezoniniai
 l2 <- BoxCox.lambda(usgdp)               #gauname transformacijos parametrą (0.37)
 duom2 <- BoxCox(usgdp, l2)
-plot(duom2)                              #duomenys po transformacijos
+plot(duom2, col="red")                   #duomenys po transformacijos
 n2 <- ndiffs(duom2)                      #gauname diferencijavimo eilę transformuotiems duomenims (1)
 duom2_1 <- diff(duom2, differences=n2)
-plot(duom2_1)                            #duomenys po diferencijavimo
+plot(duom2_1, col="purple")              #duomenys po diferencijavimo
 ```
 
 Atliksime testą patikrinimui, ar šie duomenys yra stacionarūs. Tikrinsime su **Augmented Dickey Fuller test**. (Ho: duomenys nestacionarūs ir nesezoniniai):
@@ -53,7 +53,7 @@ adf.test(duom2_1)
 
 **(c)** Duomenys *mcopper*:
 ```{r}
-plot(mcopper)  #pažiūrime, kaip atrodo duomenys
+plot(mcopper, col="blue")  #pažiūrime, kaip atrodo duomenys
 ```
 
 Kyla įtarimas, kad duomenys gali būti sezoniniai ir neaišku, ar reiks naudoti *ndiffs* ar *nsdiffs*, todėl pasinaudosime ACF:
@@ -66,10 +66,10 @@ Matome, kad duomenys nėra sezoniniai, nes nėra ACF grafikas tiesiog lėtai ma�
 ```{r}
 l3 <- BoxCox.lambda(mcopper)            #gauname transformacijos parametrą (0.19)
 duom3 <- BoxCox(mcopper, l3)
-plot(duom3)                             #duomenys po transformacijos
+plot(duom3, col="red")                  #duomenys po transformacijos
 n3 <- ndiffs(duom3)                     #gauname diferencijavimo eilę transformuotiems duomenims (1)
 duom3_1 <- diff(duom3, differences=n3)
-plot(duom3_1)                           #duomenys po diferencijavimo
+plot(duom3_1, col="purple")             #duomenys po diferencijavimo
 ```
 
 Atliksime testą patikrinimui, ar šie duomenys yra stacionarūs. Tikrinsime su **Augmented Dickey Fuller test**. (Ho: duomenys nestacionarūs ir nesezoniniai):
@@ -80,7 +80,7 @@ adf.test(duom3_1)
 
 **(d)** Duomenys *enplanements*:
 ```{r}
-plot(enplanements)  #pažiūrime, kaip atrodo duomenys
+plot(enplanements, col="blue")  #pažiūrime, kaip atrodo duomenys
 ```
 
 Duomenys gali būti sezoniniai ir neaišku, ar reiks naudoti *ndiffs* ar *nsdiffs*, todėl pasinaudosime ACF:
@@ -91,23 +91,28 @@ Acf(enplanements)
 Matome, kad duomenys panašūs į sezoninius, nes ACF grafikas turi pasikartojančių pakilimų.  
 
 ```{r}
-l4 <- BoxCox.lambda(enplanements)       #gauname transformacijos parametrą (-0.23)
+l4 <- BoxCox.lambda(enplanements)               #gauname transformacijos parametrą (-0.23)
 duom4 <- BoxCox(enplanements, l4)
-plot(duom4)                             #duomenys po transformacijos
-n4 <- nsdiffs(duom4)                    #gauname diferencijavimo eilę transformuotiems duomenims (sezoniniams) (1)
-duom4_1 <- diff(duom4, differences=n4)
-plot(duom4_1)                           #duomenys po diferencijavimo
+plot(duom4, col="red")                          #duomenys po transformacijos
+n4 <- nsdiffs(duom4)                            #gauname diferencijavimo eilę transformuotiems duomenims (sezoniniams) (1)
+duom4_1 <- diff(duom4, lag=12, differences=n4)  #duomenys po diferencijavimo sezonais
+plot(duom4_1, col="purple")
 ```
 
 Atliksime testą patikrinimui, ar šie duomenys yra stacionarūs. Tikrinsime su **Augmented Dickey Fuller test**. (Ho: duomenys nestacionarūs ir nesezoniniai):
 ```{r}
 adf.test(duom4_1)
-#p-value<0.05, vadinasi Ho atmetame, t.y. iš tikrųjų duomenys stacionarūs
+#p-value>0.05, vadinasi Ho priimame, t.y. duomenys nestacionarūs
+#dar kartą diferencijuosime, dabar kaip nesezoninius duomenis:
+duom4_2 <- diff(duom4_1, differences=ndiffs(duom4_1))
+plot(duom4_2, col="brown")
+adf.test(duom4_2)
+#dabar p-value<0.05, vadinasi Ho atmetame, duomenys stacionarūs
 ```
 
 **(e)** Duomenys *visitors*:
 ```{r}
-plot(visitors)  #pažiūrime, kaip atrodo duomenys
+plot(visitors, col="blue")  #pažiūrime, kaip atrodo duomenys
 ```
 
 Duomenys gali būti sezoniniai ir neaišku, ar reiks naudoti *ndiffs* ar *nsdiffs*, todėl pasinaudosime ACF:
@@ -118,18 +123,18 @@ Acf(visitors)
 Matome, kad duomenys sezoniniai, nes ACF grafikas turi pasikartojančių pakilimų (kasmet).  
 
 ```{r}
-l5 <- BoxCox.lambda(visitors)          #gauname transformacijos parametrą (0.28)
+l5 <- BoxCox.lambda(visitors)                   #gauname transformacijos parametrą (0.28)
 duom5 <- BoxCox(visitors, l5)
-plot(duom5)                            #duomenys po transformacijos
-n5 <- nsdiffs(duom5)                   #gauname diferencijavimo eilę transformuotiems duomenims (sezoniniams) (1)
-duom5_1 <- diff(duom5, differences=n5)
-plot(duom5_1)                          #duomenys po diferencijavimo
+plot(duom5, col="red")                          #duomenys po transformacijos
+n5 <- nsdiffs(duom5)                            #gauname diferencijavimo eilę transformuotiems duomenims (sezoniniams) (1)
+duom5_1 <- diff(duom5, lag=12, differences=n5)
+plot(duom5_1, col="purple")                     #duomenys po diferencijavimo
 ```
 
-Atliksime testą patikrinimui, ar šie duomenys yra stacionarūs. Tikrinsime su **Augmented Dickey Fuller test**. (Ho: duomenys nestacionarūs ir nesezoniniai):
+Atliksime testą patikrinimui, ar šie duomenys yra stacionarūs. Tikrinsime su **Augmented Dickey Fuller test**. (Ho: duomenys nestacionarūs):
 ```{r}
 adf.test(duom5_1)
-#p-value<0.05, vadinasi Ho atmetame, t.y. iš tikrųjų duomenys stacionarūs
+#p-value<0.05, vadinasi Ho atmetame, t.y. duomenys stacionarūs
 ```
   
   
@@ -147,3 +152,34 @@ plot(BoxCox(cangas, lambda), col="purple")
 Matome, kad transformacija nėra sėkminga. Taip yra todėl, kad originalūs duomenys yra "banguoti", susidaro lyg iš dviejų dalių, todėl neišeina pritaikyti transformacijos, tinkančios visiems duomenims.
 
 ###Lab Session 6, užduotis nr. 3  
+Download the data at http://robjhyndman.com/data/retail.xls. Choose one of the series and find an appropriate Box-Cox transformation and order of differencing in order to obtain stationary data.  
+
+```{r}
+retail <- read.csv("retail.csv", header = T)
+dat <- retail[,5]                                    # pasirenkame stulpelį
+retail_ts = ts(dat, start=c(1982,4), frequency=12)   # sukuriame laiko eilutę 
+#pažiūrime, kaip atrodo duomenys:
+plot(retail_ts, col="blue")
+```
+  
+Tikėtina, kad duomenys sezoniniai, todėl pasinaudosime ACF:
+```{r}
+Acf(retail_ts, lag.max=25)
+```
+  
+Matome, kad duomenys panašūs į sezoninius, nes ACF grafikas turi pasikartojančių pakilimų( ties lagais 1, 12, 24, ... - kasmet)
+
+```{r}
+par <- BoxCox.lambda(retail_ts)                  #gauname transformacijos parametrą (0.16)
+datata <- BoxCox(retail_ts, par)
+plot(datata, col="red")                          #duomenys po transformacijos
+dif <- nsdiffs(datata)                           #gauname diferencijavimo eilę transformuotiems duomenims (sezoniniams) (1)
+datata2 <- diff(datata, lag=12, differences=dif)
+plot(datata2, col="purple")                      #duomenys po diferencijavimo
+```
+
+Atliksime testą patikrinimui, ar šie duomenys yra stacionarūs. Tikrinsime su **Augmented Dickey Fuller test**. (Ho: duomenys nestacionarūs):
+```{r}
+adf.test(datata2)
+#p-value<0.05, vadinasi Ho atmetame, t.y. iš tikrųjų duomenys stacionarūs
+```
