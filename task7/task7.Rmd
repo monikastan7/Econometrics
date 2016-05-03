@@ -1,0 +1,189 @@
+---
+title: "Task7"
+author: "Monika Stanislovėnaitė, EKO"
+date: "2016-04-05"
+output: html_document
+---
+---
+[@Hyndman2014a, ch. 2. The forecaster’s toolbox, Lab Session 2]
+
+###Lab Session 2, uzduotis nr. 1  
+The function `tsdisplay(data, plot.type="scatter")` is useful for showing a time plot, ACF plot and lagged scatterplot on the same graph. Use it to produce plots of the following time series: *bricksq*, *hsales*, *ibmclose*. Can you spot the effects of seasonality, cyclicity and trend?  
+
+Uzduociai reikes paketo **fpp**:
+```{r}
+library(fpp)
+```
+
+Duomenys:
+```{r}
+ts1 <- bricksq
+ts2 <- hsales
+ts3 <- ibmclose
+```
+  
+Sezoniskumas, cikliskumas, trendai (naudosime funkcija *tsdisplay(data, plot.type="scatter")*):  
+
+1) Duomenys *bricksq*:
+```{r}
+tsdisplay(ts1, plot.type="scatter")
+```
+  
+Kasmetinis sezoniskumas, matome is grafiko ir ACF. Galimas cikliskumas (1956-1975; 1975-1983; 1984-1992). Yra trendas - duomenys kyla, matome is grafiko ir mazejancio ACF.  
+  
+2) Duomenys *hsales*:
+```{r}
+tsdisplay(ts2, plot.type="scatter")
+```
+  
+Galimas kasmetinis sezoniskumas, matome is grafiko ir ACF (ACF "pikai" ties 1, 12, 24). Cikliskumas nera ryskus, bet galime sakyti kad ciklai yra "bangos" laikotarpiais 1975-1982, 1982-1992, 1992-1995. Trendo nera - to nerodo nei grafikas, nei ACF.  
+  
+3) Duomenys *ibmclose*:
+```{r}
+tsdisplay(ts3, plot.type="scatter")
+```
+  
+Sezoniskumo nera. Galimas cikliskumas (1-50; 50-280; 280-360). Is grafiko lyg ir galetume teigti, kad aiskaus trendo nera, taciau AFC visgi rodo, kad jis yra.  
+  
+  
+###Lab Session 2, užduotis nr. 3  
+Do exercises a - f for the data set **bricksq**:  
+  
+  
+Užduočiai reikės paketo **fpp**:
+```{r}
+library(fpp)
+```
+
+Naudosime duomenis *bricksq*:
+```{r}
+duom <- bricksq
+```
+  
+**(a)** We will split the data into two parts:
+```{r}
+bricks1 <- window(bricksq, end=1987.99)
+bricks2 <- window(bricksq, start=1988)
+```
+  
+**(b)** We will check that data have been split appropriately by producing the following plot:
+```{r}
+plot(bricksq)
+lines(bricks1,col="red")
+lines(bricks2,col="blue")
+```
+  
+**(c)** We will calculate forecasts using each of the four benchmark methods applied to *bricks1*:
+```{r}
+##isbandysime visus metodus - drift, mean, naive ir seasonal naive.
+#mean metodas (forecast of all future values is equal to mean of historical data):
+fmean <- meanf(bricks1, h=27)
+#naive metodas (forecasts equal to last observed value):
+fnaive <- naive(bricks1, h=27)
+#seasonal naive metodas (forecasts equal to last value from same season):
+fsnaive <- snaive(bricks1, h=27)
+#drift metodas (forecasts equal to last value plus average change):
+fdrift <- rwf(bricks1, drift=TRUE, h=27)
+```
+  
+**(d)** We will compare the accuracy of forecasts against the actual values stored in *bricks2*:
+```{r}
+accuracy(fmean, bricks2)
+accuracy(fnaive, bricks2)
+accuracy(fsnaive, bricks2)
+accuracy(fdrift, bricks2)
+```
+  
+**(e)** Which method does best? Why?  
+Geriausias metodas prognozavimui šiuo atveju yra **seasonal naive** metodas, nes jis turi mažiausius RMSE, MAE, MAPE, MASE. Taip pat iš grafiko galime pastebėti, kad duomenys yra sezoniniai, o **seasonal naive** metodas ir atsižvelgia į sezoniškumą.Kad yra kasmetinis sezoniškumas galime įsitikinti ir su *ACF*:
+```{r}
+acf(duom)
+#"pikai" ties 1, 2, 3, ...
+```
+  
+**(f)** For the best method, compute the residuals and plot them. Do the residuals appear to be uncorrelated and normally distributed?
+```{r}
+res <- residuals(fsnaive)
+plot(res, col="purple")
+hist(res, breaks="FD") #iš grafiko atrodo, kad liekanos normaliai pasiskirsčiusios
+shapiro.test(res) # tačiau pritaikę testą gauname, kad liekanos nėra normalios
+#vis dėlto nežiūrėsime taip griežtai, žiūrėsime tik į formą ir teigsime, kad liekanos normalios
+Acf(res) #for uncorrelated data, we would expect each autocorrelation to be close to 0
+#95% reikšmių turėtų neišeiti už kritinių reikšmių ribų, iš ACF matome, kad nemažai reikšmių išeina už kritinių reikšmių, tai greičiausiai liekanos yra koreliuotos.
+Box.test(res, fitdf=0, type="Lj") #atmetame Ho => liekanos iš tiesų nėra baltasis triukšmas (yra koreliuotos).
+```
+  
+  
+###Lab Session 2, užduotis nr. 5  
+Consider the sales of new one-family houses in the USA (Jan 1987 – Nov 1995). Data set: *hsales*.  
+(a) Produce some plots of the data in order to become familiar with it.  
+(b) Split the data into a training set and a test set, where the test set is the last two years of data.  
+(c) Try various benchmark methods to forecast the training set and compare the results on the test set. Which method did best?  
+(d) For the best method, compute the residuals and plot them. What do the plots tell you?  
+(e) Can you invent a better forecasting method than any of the benchmark methods for these data?  
+  
+  
+Užduočiai reikės paketo fpp:
+```{r}
+library(fpp)
+```
+
+Naudosime duomenis *hsales*:
+```{r}
+d <- hsales
+```
+
+**(a)** Produce some plots of the data in order to become familiar with it:
+```{r}
+tsdisplay(d, plot.type="scatter")
+```
+  
+Galimas kasmetinis sezoniškumas, matome is grafiko ir ACF (ACF "pikai" ties 1, 12, 24). Ciklai - "bangos" laikotarpiais 1975-1982, 1982-1992, 1992-1995. Trendo nėra - to nerodo nei grafikas, nei ACF.
+  
+**(b)** Split the data into a training set and a test set, where the test set is the last two years of data:
+```{r}
+hsales1 <- window(d, end=1993.99)
+hsales2 <- window(d, start=1994)
+```
+
+**(c)** Try various benchmark methods to forecast the training set and compare the results on the test set. Which method did best?
+```{r}
+##isbandysime visus metodus - drift, mean, naive ir seasonal naive.
+#mean metodas (forecast of all future values is equal to mean of historical data):
+mean <- meanf(hsales1, h=27)
+plot(mean)
+#naive metodas (forecasts equal to last observed value):
+naive <- naive(hsales1, h=27)
+plot(naive)
+#seasonal naive metodas (forecasts equal to last value from same season):
+snaive <- snaive(hsales1, h=27)
+plot(snaive)
+#drift metodas (forecasts equal to last value plus average change):
+drift <- rwf(hsales1, drift=TRUE, h=27)
+plot(drift)
+
+#we'll compare the accuracy of forecasts against the actual values stored in hsales2:
+accuracy(mean, hsales2)
+accuracy(naive, hsales2)
+accuracy(snaive, hsales2)
+accuracy(drift, hsales2)
+```
+  
+Remiantis *accuracy* funkcija, geriausi metodai atrodo *naive* ir *drift*. Rinksimės **drift** metodą kaip geriausią, nes jis duoda dar ir tendenciją mažėti (nors ir labai mažą).  
+  
+**(d)** For the best method, compute the residuals and plot them. What do the plots tell you?
+```{r}
+res <- residuals(drift)
+plot(res, col="green")
+shapiro.test(res)
+hist(res, breaks="FD")
+Acf(res)
+Box.test(res, fitdf=0, type="Lj") #atmetame Ho => liekanos nėra baltasis triukšmas.
+```
+  
+Pagal *shapiro.test* liekanos nėra normalios, bet šiuo atveju galime nežiūrėti taip griežtai ir atsižvelgi tik į histogramos formą ir teigti, kad liekanos yra normaliai pasiskirsčiusios.  
+Iš ACF galime numatyti, kad liekanos nėra baltasis triukšmas, tai patvirtina ir *Box.test*.  
+  
+**(e)** Can you invent a better forecasting method than any of the benchmark methods for these data?  
+  
+Galime sugalvoti geresnį prognozavimo modelį, nes liekanos nėra baltasis triukšmas, t.y. jose dar yra informacijos. Taip pat užduotyje naudoti 4 metodai yra patys paprasčiausi, yra ir geresnių.
