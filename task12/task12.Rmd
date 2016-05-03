@@ -5,9 +5,9 @@ date: "2016-04-26"
 output: html_document
 ---
 ---
-[@Hyndman2014a, ch. 5., Lab Session 5b]
+[@Hyndman2014a, ch. 5., Lab Session 5b]  
 
-**Lab Session 5b, užduotis nr. 1**  
+###Lab Session 5b, užduotis nr. 1  
 For this exercise, use the monthly Australian short-term overseas visitors data, May 1985–April 2005. (Data set: visitors in *expsmooth* package.)  
   
 Užduočiai reikės paketų **fpp** ir **expsmooth**:
@@ -15,29 +15,31 @@ Užduočiai reikės paketų **fpp** ir **expsmooth**:
 library(fpp)
 library(expsmooth)
 ```
-
+  
 Duomenys:
 ```{r}
 duom <- visitors
 ```
-
+  
 Pažiūrime, kaip atrodo duomenys:
 ```{r}
-plot(duom)
+plot(duom, col="green")
 ```
-Iš grafiko matome, kad duomenys turi trendą didėti, taip pat yra sezoniškumas. Dar galime įžvelgi, kad trendas turi tendenciją po truputį gęsti.  
-
+  
+Iš grafiko matome, kad duomenys turi trendą didėti, taip pat yra sezoniškumas. Dar galime įžvelgti, kad trendas turi tendenciją po truputį gęsti.  
+  
 Kad tikrai yra sezoniškumas, galime įsitikinti ir iš ACF - "pikai" ties lagais 1, 12, 24, ..., t.y kasmet:
 ```{r}
 Acf(duom)
 ```
-
+  
 **(a)** Use **ets** to find the best model for these data and record the training set RMSE:
 ```{r}
 fit_ets <- ets(duom)
 fit_ets
 accuracy(fit_ets)
 ```
+  
 Kaip ir pasakyta sąlygoje, gauname ETS(M,A,M) (multiplicative Holt-Winters' method with multiplicative errors). Matome, kad training set RMSE yra **15,847**.  
 
 **(b)** We will now check how much larger the one-step RMSE is on out-of-sample data using time series cross-validation. The following code will compute the result, beginning with four years of data in the training set:
@@ -65,11 +67,12 @@ par(mfrow=c(1,2))
 plot(e)
 plot(duom)
 ```
+  
 Atrodo, kad paklaidos yra heteroskedastiškos, nes didėja paklaidų sklaida. Dešinėje yra *visitors* duomenų grafikas. Matome, kad bėgant metams reikšmės ne tik didėja, bet didėja ir pačių reikšmių išsibarstymas, dėl to ir gauname heteroskedastiškas paklaidas.
 
 **(e)** How does this problem bias the comparison of the RMSE values from (1a) and (1b)? (Hint: think about the effect of the missing values in e.)  
 Negalime palyginti RMSE, kadangi RMSE atsižvelgia į trūkstamas reikšmes (panaikina jas), taigi gauname nelygų dėmenų skaičių RMSE skaičiavime 1a ir 1b dalyse, t.y. 1b dalyje turime mažiau reikšmių. Bet 1b dalies RMSE vistiek gaunasi didesnis, kadangi gauname daug didesnes paklaidas.
-
+  
 **(f)** In practice, we will not know that the best model on the whole data set is ETS(M,A,M) until we observe all the data. So a more realistic analysis would be to allow ets to select a different model each time through the loop. Calculate the RMSE using this approach. (**Warning**: it will take a while as there are a lot of models to fit.)
 ```{r}
 #(ilgai užtruks, nes cikle naudojame ets)
@@ -85,7 +88,7 @@ e[i] <- visitors[i+1]-fc
 }
 sqrt(mean(e^2,na.rm=TRUE))  #RMSE
 ```
-RMSE šiuo atveju gaunasi **18.151**
+RMSE šiuo atveju gaunasi **18.151**  
 
 **(g)** How does the RMSE computed in (1f) compare to that computed in (1b)? Does the re-selection of a model at each step make much difference?  
 1b dalyje RMSE gavome **18.0896**, o 1f dalyje - **18.151**. Matome, kad būdas, taikytas 1f dalyje didelės įtakos nepadarė. Todėl geriau yra rinktis metodą su iškart nustatytu ETS modeliu, nes to nepadarius reikia gana ilgai laukti atsakymo.
