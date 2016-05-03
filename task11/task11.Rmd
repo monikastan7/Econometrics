@@ -7,7 +7,7 @@ output: html_document
 ---
 [@Hyndman2014a, ch. 3., Lab Session 4]
 
-**Lab Session 4, užduotis nr. 1**    
+###Lab Session 4, užduotis nr. 1    
 Use `ets()` to find the best ETS model for the price of eggs (data set eggs). How does this model compare to the one you found in the previous lab session?  
 
 Užduočiai reikės paketo **fpp**:
@@ -32,13 +32,13 @@ Pažiūrime, kaip atrodo prognozės:
 fcast <- forecast(fit_ets, h=100)
 plot(fcast) #visos prognozuojamos reikšmės lygios
 ```
-
+  
 Lab Session 3 užduotyje nr. 1 kaip geriausias variantas buvo parinktas šis:
 ```{r}
 fit_holt <- holt(e, h=100)
 plot(fit_holt)
 ```
-
+  
 Palyginame šių modelių prognozes:
 ```{r}
 plot(e, xlim=c(1900,2090), ylim=c(-50,400))
@@ -46,19 +46,20 @@ lines(fcast$mean, col=3)
 lines(fit_holt$mean, col=2)
 legend("topright", lty=1, lwd="1", col=c(3,2), legend=c("Forecasts from ETS(M,N,N)", "Forecasts from Holt's method"))
 ```
-
+  
 Palyginame modelių AIC:
 ```{r}
 fit_ets[2]
 fit_holt$model[2]
 ```
 Matome, kad ETS modelio AIC yra mažesnis, vadinasi jis iš tiesų yra geresnis.  
-
+  
 Pažiūrėsime, ar *fit_ets* liekanos atrodo kaip baltasis triukšmas:
 ```{r}
 Acf(fit_ets$res)
 Box.test(fit_ets$res, fitdf=0, type="Lj")
 ```
+  
 Iš ACF matome, kad liekanos yra baltasis triukšmas, nes praktiškai visos linijos neišeina už kritinių reikšmių ribų. `Box.test()` taip pat tai patvirtina, nes p-value>0.05.
-
+  
 **Išvada**: Remiantis AIC, ETS(M,N,N) modelis šiems duomenims yra geresnis nei Holt metodas. Pagal jį, prognozuojama kaina yra stabili. Tai iš tiesų atrodo logiškiau, nes Holt metodas didėjant metams pradeda duoti neigiamas reikšmes.
