@@ -1,0 +1,168 @@
+---
+title: "Task14"
+author: "Monika Stanislovėnaitė, EKO"
+date: "2016-05-08"
+output: html_document
+---
+---
+
+[@Hyndman2014a, ch. 7., Lab Session 7]  
+
+###Lab Session 7, užduotis nr. 1  
+
+
+Užduotims reikės paketo *fpp*:
+```{r}
+library(fpp)
+```
+
+Duomenys **wmurders**.  
+  
+**(a)** If necessary, find a suitable Box-Cox transformation for the data:
+```{r}
+#pažiūrėsime, kaip atrodo duomenys:
+plot(wmurders)
+#nenaudosime Box-Cox transformacijos
+```
+
+**(b)** Fit a suitable ARIMA model to the transformed data using
+`auto.arima()`:
+```{r}
+fit <- auto.arima(wmurders)
+```
+Gauname ARIMA(1,2,1) su AIC=-6.88
+
+**(c)** Try some other plausible models by experimenting with the
+orders chosen:
+```{r}
+ndiffs(wmurders)  #siūloma diferencijavimo eilė
+plot(diff(wmurders, diff=ndiffs(wmurders)), col="red") 
+adf.test(diff(wmurders, diff=ndiffs(wmurders)))
+#p-value<0.05, vadinasi šiuo atveju duomenys yra stationarūs
+
+par(mfrow=c(1,2))
+acf(wmurders)
+pacf(wmurders)
+
+fit1 <- Arima(wmurders, order=c(0,2,0))
+fit2 <- Arima(wmurders, order=c(1,2,0))
+fit3 <- Arima(wmurders, order=c(1,1,0))
+```
+
+**(d)** Choose what you think is the best model and check the residual
+diagnostics:
+```{r}
+#tikrinsime AIC:
+fit[6]
+fit1[6]
+fit2[6]
+fit3[6]
+```
+Mažiausią AIC turi fit3, jį ir rinksimės: ARIMA(1,1,0)  
+```{r}
+Acf(residuals(fit3))
+Box.test(residuals(fit3), type="Lj")
+```
+Iš ACF matome, kad liekanos yra baltasis triukšmas, nes praktiškai visos linijos neišeina už kritinių reikšmių ribų. `Box.test()` taip pat tai patvirtina, nes p-value>0.05.  
+
+**(e)** Produce forecasts of your fitted model. Do the forecasts look
+reasonable?
+```{r}
+fc1 <- forecast(fit3, h=20)
+plot(fc1)
+#prognozės atrodo logiškos
+```
+
+**(f)** Compare the results with what you would obtain using `ets()` (with no transformation):
+```{r}
+fit_ets1 <- ets(wmurders)
+#gauname ETS(M,N,N) - multiplicative errors, nėra trendo, nėra sezoniškumo
+fc_ets1 <- forecast(fit_ets1, h=20)
+plot(fc_ets1)  #gauname panašią prognozę
+
+#palyginsime AIC:
+fit3[6]
+fit_ets1[2]
+```
+Matome, kad fit3 modelis ARIMA(1,1,0) vis dėlto yra geresnis.  
+  
+  
+###Lab Session 7, užduotis nr. 2  
+
+Duomenys **usgdp**.  
+
+**(a)** If necessary, find a suitable Box-Cox transformation for the data:
+```{r}
+#pažiūrėsime, kaip atrodo duomenys:
+plot(usgdp)
+
+#transformuosime:
+l1 <- BoxCox.lambda(usgdp)         #gauname transformacijos parametrą (0.37)
+usgdp_tr <- BoxCox(usgdp, l1)
+plot(usgdp_tr, col="red", lwd=2)                 #duomenys po transformacijos
+```
+
+**(b)** Fit a suitable ARIMA model to the transformed data using
+`auto.arima()`:
+```{r}
+fitt <- auto.arima(usgdp_tr)
+```
+Gauname ARIMA(2,1,0) with drift su AIC=-115.11
+
+**(c)** Try some other plausible models by experimenting with the
+orders chosen:
+```{r}
+ndiffs(usgdp_tr)  #siūloma diferencijavimo eilė
+plot(diff(usgdp_tr, diff=ndiffs(usgdp_tr)), col="green") 
+adf.test(diff(usgdp_tr, diff=ndiffs(usgdp_tr)))
+#p-value<0.05, vadinasi šiuo atveju duomenys yra stationarūs
+
+par(mfrow=c(1,2))
+Acf(usgdp_tr)
+Pacf(usgdp_tr)
+
+fitt1 <- Arima(usgdp_tr, order=c(1,1,0))
+fitt2 <- Arima(usgdp_tr, order=c(1,1,1))
+fitt3 <- Arima(usgdp_tr, order=c(1,2,0))
+```
+
+**(d)** Choose what you think is the best model and check the residual
+diagnostics:
+```{r}
+#tikrinsime AIC:
+fitt[6]
+fitt1[6]
+fitt2[6]
+fitt3[6]
+```
+Mažiausią AIC turi fitt, jį ir rinksimės: ARIMA(2,1,0) with drift  
+```{r}
+Acf(residuals(fitt))
+Box.test(residuals(fitt), type="Lj")
+```
+Iš ACF matome, kad liekanos yra baltasis triukšmas, nes praktiškai visos linijos neišeina už kritinių reikšmių ribų. `Box.test()` taip pat tai patvirtina, nes p-value>0.05.  
+
+**(e)** Produce forecasts of your fitted model. Do the forecasts look
+reasonable?
+```{r}
+fc2 <- forecast(fitt, h=50)
+plot(fc2)
+#prognozės atrodo logiškos
+```
+
+**(f)** Compare the results with what you would obtain using `ets()` (with no transformation):
+```{r}
+fit_ets2 <- ets(usgdp)
+#gauname ETS(A,Ad,N)
+fc_ets2 <- forecast(fit_ets2, h=50)
+plot(fc_ets2)  #gauname kiek kitokią prognozę
+
+#palyginsime AIC:
+fitt[6]
+fit_ets2[2]
+```
+Matome, kad fitt modelis ARIMA(2,1,0) with drift vis dėlto yra geresnis.  
+  
+  
+###Lab Session 7, užduotis nr. 3  
+  
