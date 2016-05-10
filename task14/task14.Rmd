@@ -1,7 +1,7 @@
 ---
 title: "Task14"
 author: "Monika Stanislovėnaitė, EKO"
-date: "2016-05-08"
+date: "2016-05-10"
 output: html_document
 ---
 ---
@@ -49,8 +49,7 @@ fit2 <- Arima(wmurders, order=c(1,2,0))
 fit3 <- Arima(wmurders, order=c(1,1,0))
 ```
 
-**(d)** Choose what you think is the best model and check the residual
-diagnostics:
+**(d)** Choose what you think is the best model and check the residual diagnostics:
 ```{r}
 #tikrinsime AIC:
 fit[6]
@@ -58,7 +57,43 @@ fit1[6]
 fit2[6]
 fit3[6]
 ```
-Mažiausią AIC turi fit3, jį ir rinksimės: ARIMA(1,1,0)  
+Mažiausią AIC turi fit3: ARIMA(1,1,0)  
+  
+Standartiškai modelių tikslumą galime įvertinti su `accuracy` funkcija. Pažiūrėsime, kokius tikslumus gausime *in sample* ir *out of sample*:
+```{r}
+wmurders_in <- window(wmurders, end=1988)
+
+fit_in <- Arima(wmurders_in, order=c(1,2,1))
+fit1_in <- Arima(wmurders_in, order=c(0,2,0))
+fit2_in <- Arima(wmurders_in, order=c(1,2,0))
+fit3_in <- Arima(wmurders_in, order=c(1,1,0))
+
+f_fit_in <- forecast(fit_in)
+f_fit1_in <- forecast(fit1_in)
+f_fit2_in <- forecast(fit2_in)
+f_fit3_in <- forecast(fit3_in)
+
+ans_1 <- rbind(
+  accuracy(f_fit_in),
+  accuracy(f_fit1_in),
+  accuracy(f_fit2_in),
+  accuracy(f_fit3_in)
+)
+rownames(ans_1) <- c('fit_in', 'fit1_in', 'fit2_in', 'fit3_in')
+ans_1
+
+ans_2 = rbind(
+  accuracy(f_fit_in, wmurders)[2,],
+  accuracy(f_fit1_in, wmurders)[2,],
+  accuracy(f_fit2_in, wmurders)[2,],
+  accuracy(f_fit3_in, wmurders)[2,]
+)
+rownames(ans_2) <- c('fit_out', 'fit1_out', 'fit2_out', 'fit3_out')
+ans_2
+```
+Pagal *in sample* geriausias modelis yra **fit**, o pagal *out of sample* - **fit3**, dėl to rinksimės pagal AIC - modelį fit3: ARIMA(1,1,0)  
+
+Išrinkę modelį, patikrinsime jo liekanas:
 ```{r}
 Acf(residuals(fit3))
 Box.test(residuals(fit3), type="Lj")
@@ -94,7 +129,7 @@ Duomenys **usgdp**.
 **(a)** If necessary, find a suitable Box-Cox transformation for the data:
 ```{r}
 #pažiūrėsime, kaip atrodo duomenys:
-plot(usgdp)
+plot(usgdp, col="purple")
 
 #transformuosime:
 l1 <- BoxCox.lambda(usgdp)         #gauname transformacijos parametrą (0.37)
@@ -135,7 +170,43 @@ fitt1[6]
 fitt2[6]
 fitt3[6]
 ```
-Mažiausią AIC turi fitt, jį ir rinksimės: ARIMA(2,1,0) with drift  
+Mažiausią AIC turi fitt: ARIMA(2,1,0) with drift  
+  
+Standartiškai modelių tikslumą galime įvertinti su `accuracy` funkcija. Pažiūrėsime, kokius tikslumus gausime *in sample* ir *out of sample*:
+```{r}
+usgdp_tr_in <- window(usgdp_tr, end=1989)
+
+fitt_in <- Arima(usgdp_tr_in, order=c(2,1,0), include.drift=TRUE)
+fitt1_in <- Arima(usgdp_tr_in, order=c(1,1,0))
+fitt2_in <- Arima(usgdp_tr_in, order=c(1,1,1))
+fitt3_in <- Arima(usgdp_tr_in, order=c(1,2,0))
+
+f_fitt_in <- forecast(fitt_in)
+f_fitt1_in <- forecast(fitt1_in)
+f_fitt2_in <- forecast(fitt2_in)
+f_fitt3_in <- forecast(fitt3_in)
+
+ans2_1 <- rbind(
+  accuracy(f_fitt_in),
+  accuracy(f_fitt1_in),
+  accuracy(f_fitt2_in),
+  accuracy(f_fitt3_in)
+)
+rownames(ans2_1) <- c('fitt_in', 'fitt1_in', 'fitt2_in', 'fitt3_in')
+ans2_1
+
+ans2_2 <- rbind(
+  accuracy(f_fitt_in, usgdp_tr)[2,],
+  accuracy(f_fitt1_in, usgdp_tr)[2,],
+  accuracy(f_fitt2_in, usgdp_tr)[2,],
+  accuracy(f_fitt3_in, usgdp_tr)[2,]
+)
+rownames(ans2_2) <- c('fitt_out', 'fitt1_out', 'fitt2_out', 'fitt3_out')
+ans2_2
+```
+Pagal *in sample* geriausias modelis yra **fitt**, taip pat ir *out of sample*. Dėl to rinksimės šį modelį (ARIMA(2,1,0) with drift).  
+    
+Išrinkę modelį, patikrinsime jo liekanas:
 ```{r}
 Acf(residuals(fitt))
 Box.test(residuals(fitt), type="Lj")
@@ -165,4 +236,115 @@ Matome, kad fitt modelis ARIMA(2,1,0) with drift vis dėlto yra geresnis.
   
   
 ###Lab Session 7, užduotis nr. 3  
+  
+Duomenys **mcopper**.  
+
+**(a)** If necessary, find a suitable Box-Cox transformation for the data:
+```{r}
+#pažiūrėsime, kaip atrodo duomenys:
+plot(mcopper)
+
+#transformuosime:
+l2 <- BoxCox.lambda(mcopper)         #gauname transformacijos parametrą (0.19)
+mcopper_tr <- BoxCox(mcopper, l2)
+plot(mcopper_tr, col="blue")                 #duomenys po transformacijos
+```
+
+**(b)** Fit a suitable ARIMA model to the transformed data using
+`auto.arima()`:
+```{r}
+fittt <- auto.arima(mcopper_tr)
+```
+Gauname ARIMA(0,1,1) su AIC=-86.1
+
+**(c)** Try some other plausible models by experimenting with the
+orders chosen:
+```{r}
+ndiffs(mcopper_tr)  #siūloma diferencijavimo eilė
+plot(diff(mcopper_tr, diff=ndiffs(mcopper_tr)), col="green") 
+adf.test(diff(mcopper_tr, diff=ndiffs(mcopper_tr)))
+#p-value<0.05, vadinasi šiuo atveju duomenys yra stationarūs
+
+par(mfrow=c(1,2))
+Acf(mcopper_tr)
+Pacf(mcopper_tr)
+
+fittt1 <- Arima(mcopper_tr, order=c(1,1,0))
+fittt2 <- Arima(mcopper_tr, order=c(1,1,1))
+fittt3 <- Arima(mcopper_tr, order=c(2,1,0))
+```
+
+**(d)** Choose what you think is the best model and check the residual
+diagnostics:
+```{r}
+#tikrinsime AIC:
+fittt[6]
+fittt1[6]
+fittt2[6]
+fittt3[6]
+```
+Mažiausią AIC turi fittt: ARIMA(0,1,1)
+
+
+Standartiškai modelių tikslumą galime įvertinti su `accuracy` funkcija. Pažiūrėsime, kokius tikslumus gausime *in sample* ir *out of sample*:
+```{r}
+mcopper_tr_in <- window(mcopper_tr, end=1992)
+
+fittt_in <- Arima(mcopper_tr_in, order=c(0,1,1))
+fittt1_in <- Arima(mcopper_tr_in, order=c(1,1,0))
+fittt2_in <- Arima(mcopper_tr_in, order=c(1,1,1))
+fittt3_in <- Arima(mcopper_tr_in, order=c(2,1,0))
+
+f_fittt_in <- forecast(fittt_in)
+f_fittt1_in <- forecast(fittt1_in)
+f_fittt2_in <- forecast(fittt2_in)
+f_fittt3_in <- forecast(fittt3_in)
+
+ans3_1 <- rbind(
+  accuracy(f_fittt_in),
+  accuracy(f_fittt1_in),
+  accuracy(f_fittt2_in),
+  accuracy(f_fittt3_in)
+)
+rownames(ans3_1) <- c('fittt_in', 'fittt1_in', 'fittt2_in', 'fittt3_in')
+ans3_1
+
+ans3_2 <- rbind(
+  accuracy(f_fittt_in, mcopper_tr)[2,],
+  accuracy(f_fittt1_in, mcopper_tr)[2,],
+  accuracy(f_fittt2_in, mcopper_tr)[2,],
+  accuracy(f_fittt3_in, mcopper_tr)[2,]
+)
+rownames(ans3_2) <- c('fittt_out', 'fittt1_out', 'fittt2_out', 'fittt3_out')
+ans3_2
+```
+Pagal *in sample* geriausias modelis yra **fittt**, o pagal *out of sample* - **fittt3**, dėl to rinksimės pagal AIC - modelį fittt: ARIMA(0,1,1) 
+    
+Išrinkę modelį, patikrinsime jo liekanas:
+```{r}
+Acf(residuals(fittt))
+Box.test(residuals(fittt), type="Lj")
+```
+Iš ACF matome, kad liekanos yra baltasis triukšmas, nes praktiškai visos linijos neišeina už kritinių reikšmių ribų. `Box.test()` taip pat tai patvirtina, nes p-value>0.05.  
+
+**(e)** Produce forecasts of your fitted model. Do the forecasts look
+reasonable?
+```{r}
+fc3 <- forecast(fittt, h=75)
+plot(fc3)
+#prognozės atrodo logiškos
+```
+
+**(f)** Compare the results with what you would obtain using `ets()` (with no transformation):
+```{r}
+fit_ets3 <- ets(mcopper)
+#gauname ETS(M,Md,N)
+fc_ets3 <- forecast(fit_ets3, h=75)
+plot(fc_ets3)  #gauname panasia prognozę
+
+#palyginsime AIC:
+fittt[6]
+fit_ets3[2]
+```
+Matome, kad fittt modelis ARIMA(0,1,1) vis dėlto yra geresnis.  
   
