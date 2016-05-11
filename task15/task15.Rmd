@@ -1,0 +1,86 @@
+---
+title: "Task15"
+author: "Monika Stanislovėnaitė, EKO"
+date: "2016-05-11"
+output: html_document
+---
+---
+
+[@Hyndman2014a, ch. 8., Lab Session 8]  
+
+###Lab Session 8, užduotis nr. 1  
+
+Duomenys **uselec**  
+  
+Užduočiai reikės paketo *fpp*:
+```{r}
+library(fpp)
+```
+
+**(a)** Do the data need transforming? If so, find a suitable transformation.
+```{r}
+#pažiūrime, kaip atrodo duomenys:
+plot(uselec, col="purple", lwd=2)
+#galime transformuoti duomenis, tai padės subalansuoti svyravimus:
+l <- BoxCox.lambda(uselec)          #gauname transformacijos parametrą (-0.35)
+uselec_tr <- BoxCox(uselec, l)
+plot(uselec_tr, col="blue", lwd=2)  #duomenys po transformacijos
+```
+  
+Toliau naudosime transformuotus duomenis *uselec_tr*.  
+  
+**(b)** Are the data stationary? If not, find an appropriate differencing which yields stationary data.
+```{r}
+#duomenys nėra stacionarūs, taigi rasime tinkamą diferencijavimo eilę:
+nsdiffs(uselec_tr)  #siūloma diferencijavimo eilė
+uselec_tr_d <- diff(uselec_tr, lag=12, diff=nsdiffs(uselec_tr))
+plot(uselec_tr_d, col="green")
+kpss.test(uselec_tr_d)
+#p-value>0.05, vadinasi duomenys panašūs į stacionarius (kai 1 kartą diferencijuojame pagal sezoną)
+```
+
+**(c)** Identify a couple of ARIMA models that might be useful in describing the time series. Which of your models is the best according to their AIC values?
+```{r}
+tsdisplay(uselec_tr_d)
+#rinksimės D=1, d=0
+#pikai ties PACF 11, 24, 36 siūlo išbandyti sezoninį AR(3) arba AR(2)
+fit1 <- auto.arima(uselec_tr)   #gauname ARIMA(1,0,2)(2,1,0)[12] with drift
+fit2 <- Arima(uselec_tr, order=c(0,0,0), seasonal=c(3,1,0))
+fit3 <- Arima(uselec_tr, order=c(0,0,0), seasonal=c(2,1,0))
+fit4 <- Arima(uselec_tr, order=c(1,0,0), seasonal=c(2,1,0))
+#palyginame AIC reikšmes:
+modelis <- c("fit1", "fit2", "fit3", "fit4")
+akaike <- c(AIC(fit1), AIC(fit2), AIC(fit3), AIC(fit4))
+data.frame(modelis, akaike)
+```
+Matome, kad geriausias modelis yra parinktas su `auto.arima`, t.y. **ARIMA(1,0,2)(2,1,0)[12] with drift**.  
+  
+**(d)** Estimate the parameters of your best model and do diagnostic testing on the residuals. Do the residuals resemble white noise? If not, try to find another ARIMA model which fits better.
+```{r}
+#modelis ARIMA(1,0,2)(2,1,0)[12] with drift
+plot(residuals(fit1), col="brown")
+Acf(residuals(fit1))  #iš ACF liekanos atrodo kaip baltasis triukšmas
+Box.test(residuals(fit1), type="Lj")
+#p-value>0.05, vadinasi iš tiesų liekanos yra baltasis triukšmas
+```
+
+**(e)** Forecast the next 24 months of data using your preferred model.
+```{r}
+fc <- forecast(fit1, h=24)
+plot(fc)
+#matome, kad prognozės atrodo logiškos 
+```
+
+**(f)** Compare the forecasts obtained using `ets()`
+```{r}
+fit_ets <- ets(uselec_tr)
+#gauname ETS(M,N,M)
+fc_ets <- forecast(fit_ets, h=24)
+plot(fc_ets)
+
+#palyginsime:
+mod <- c("ARIMA","ETS")
+rmse <- c(accuracy(fit1)[2], accuracy(fit_ets)[2])
+data.frame(mod, rmse)
+#matome, kad pagal RMSE ets modelis yra geresnis
+```
