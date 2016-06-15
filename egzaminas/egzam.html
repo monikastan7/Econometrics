@@ -1,0 +1,441 @@
+---
+title: "Egzaminas"
+author: "Monika Stanislovėnaitė, EKO"
+date: "2016-06-15"
+output: html_document
+---
+---
+
+Užduotims reikalingi paketai:
+```{r}
+library(car)
+library(fpp)
+library(dynlm)
+```
+
+###Užduotis 1 (numatyta 20 taškų)  
+  
+**a)**  
+```{r}
+valuesMat1 = outer(1:10, 1:10, "+")  
+valuesMat1
+
+probMat1 = outer(rep(1/10, 10), rep(1/10, 10))
+probMat1
+
+Tikimybe=tapply(as.vector(probMat1), as.vector(valuesMat1), sum)
+Tikimybe
+
+dd <- -9:9
+
+plot(dd, as.vector(Tikimybe), type='l')
+
+legend("top", legend="Teorinis skirstinys", col=2, lwd=2, cex=0.8)
+``` 
+  
+**b)**
+```{r}
+x1 <- rnorm(10000, 3, 2)
+x2 <- rnorm(10000, -1, 3)
+x <- x1 +x2
+```
+  
+**c)**  
+```{r}
+plot(density(x), col=4, lwd=2)
+lines(dd, as.vector(Tikimybe), type='l', col=2, lwd=2)
+legend("topright", legend=c("Teorinis sk.", "Empirinis sk."), col=c("red", "blue"), lwd=2)
+
+#Skirstinių charakteristikos:
+#vidurkis
+mean(-9:9)  #teorinis
+mean(x) #empirinis
+#mediana
+median(-9:9)  #teorine
+median(x) #empirine
+#standartinis nuokrypis
+sd(-9:9)  #teorinis
+sd(x) #empirinis
+```
+  
+**d)**  
+```{r}
+#Įvertinsime teoriškai:
+lai <- -9:9
+mean((lai^2-lai-2)>0)
+
+#Monte Carlo metodas:
+mean((x^2-x-2)>0)
+```
+  
+**e)**  
+```{r}
+#Įvertinsime teoriškai:
+lai2 <- 1:9
+mean((lai2^2-lai2-2)>0)
+
+#Monte Carlo metodas:
+mean(x>0)*mean((x^2-x-2)>0)
+```
+
+###Užduotis 2 (numatyta 30 taškų)  
+  
+#1 dalis  
+  
+**a)**  
+```{r}
+d <- read.csv2("data_b.csv")
+duom <- d[-c(416,417,418,419,420,421,422),]
+str(duom)
+#iš str matome, kad reiks keisti kai kuriu tipa i numeric
+head(duom)
+```
+  
+**b)**  
+Pašalinsime įrašus su trūkstamomis reikšmėmis. Tuomet sutvarkysime duomenų tipus:
+```{r}
+
+duom[duom=="NAN"] <- NA
+duom1 <- na.omit(duom)
+rownames(duom1) <- NULL
+
+duom1$islaidosVaisiams <- as.numeric(paste(duom1$islaidosVaisiams))
+duom1$butinosIslaidos <- as.numeric(paste(duom1$butinosIslaidos))
+duom1$pajamos <- as.numeric(paste(duom1$pajamos))
+#rajonold paliksime kaip faktoriu
+duom1$atstumasIkiParduotuves <- as.numeric(paste(duom1$atstumasIkiParduotuves))
+
+str(duom1) #dabar gerai
+```
+  
+Ieškosime išskirčių, pašalinsime:
+```{r}
+a <- match(boxplot(duom1$islaidosVaisiams)$out, duom1$islaidosVaisiams)  #1 isskirtis cia
+b <- match(boxplot(duom1$butinosIslaidos)$out, duom1$butinosIslaidos)  #3 išskirtys čia
+c <- match(boxplot(duom1$pajamos)$out, duom1$pajamos) #6 isskirtys cia 
+d <- match(boxplot(duom1$atstumasIkiParduotuves)$out, duom1$atstumasIkiParduotuves) #10 isskirciu cia
+vekt <- c(a,b,c,d)
+duom2 <- duom1[-vekt,]
+rownames(duom2) <- NULL
+```
+  
+Taigi, iš viso pašalinome 23 eilutes (buvo 415, liko 392). Toliau dirbsime su duomenimis **duom2**.
+  
+**c)**  
+```{r}
+#sytrumpinsime vardus patogumui:
+islaidosV <- duom2$islaidosVaisiams
+butinos <- duom2$butinosIslaidos
+pajamos <- duom2$pajamos
+atstumas <- duom2$atstumasIkiParduotuves
+
+plot(duom2)
+summary(duom2)
+
+kore <- rbind(cor(islaidosV, butinos),
+cor(islaidosV, pajamos),
+cor(islaidosV, atstumas),
+cor(butinos, pajamos),
+cor(butinos, atstumas),
+cor(pajamos, atstumas))
+colnames(kore) <- "Koreliacija"
+rownames(kore) <- c("islaidosV-butinos", "islaidosV-pajamos", "islaidosV-atstumas", "butinos-pajamos", "butinos-atstumas", "pajamos-atstumas")
+kore
+```
+
+Iš `plot` funkcijos lyg ir galime izvelgi koreliaciju, pvz tarp butinu islaidu ir islaiduvaisiam bei pajamu. Iš `summary` matome padėties charakteristikas, dažniausias reikšmes. Iš `cor`: patvirtina, kad gana smarkiai koreliuoja vaisiu islaidos su butinom islaidom bei pajamom. Taip pat matome, kad nėra didelės koreliacijos tarp kitu kintamųjų, taigi greiciausiai modeliuose išvengsime multikolinearumo. 
+  
+**d)**  
+```{r}
+#reikes paketo dplyr!
+library(dplyr)
+trainSet <- sample_frac(duom2, 0.8)  #314 eiluciu
+t <- as.numeric(rownames(trainSet)) # nes rownames() grąžina character
+testSet <- duom2[-t,]  #78 eilutes
+```
+  
+#2 dalis  
+  
+**a)**  
+```{r}
+fit1band <- lm(trainSet$islaidosVaisiams~trainSet$butinosIslaidos+trainSet$pajamos+factor(trainSet$rajonoId)+trainSet$atstumasIkiParduotuves)
+summary(fit1band)
+vif(fit1band)
+```
+  
+**b)**  
+Iš summary matome, kad nereikšminga gaunasi intercept ir atstumas iki parduotuves. Pakoreguosime. Pabandykite palikti tik 1 is butinu islaidu ir pajamu, panaikinti atstuma:
+```{r}
+#rajonoId - dummy variable
+fit1 <- lm(trainSet$islaidosVaisiams~trainSet$pajamos+factor(trainSet$rajonoId))
+summary(fit1)  #dabar ok
+```
+  
+**c)**  
+```{r}
+vif(fit1)
+# visi vif mazi, multikolinearumo problemos nera
+
+hist(fit1$res)
+# panasu kad paklaidos normalios
+shapiro.test(fit1$res)
+# p-value>0.05, paklaidos is tiesu normalios
+
+plot(fit1$res, col="dark green")
+library(lmtest)
+bptest(fit1)
+# p-value > 0.05 paklaidos heteroskedastiskos (itartina kodel)
+```
+  
+Taigi, šiuo atveju iškyla tik heteroskedastiskumo problema. Pasekmės: heteroskedastiskumo problema reiskia, kad OLS metudo gauti ivertiniai nera BLUE (Best Linear Unbiased Estimators) ir ju sklaida nera maziausia is visu galimu nepaslinktu iverciu. Taip pat del heteroskedastiskumo negalime pasikliauti iverciu standard errors, kuriu paslinktumas gali suklaidinti ir mes padarysime 2 rusies klaida priimdami H0. Heteroskedastiskumo problema galima isspresti logaritmuojant duomenis, naudoti weighted least squares metoda.  
+  
+#3 dalis  
+  
+**a)**  
+Gali taip būti, kad duomenyse pasireiškė netiesinė sąveika
+```{r}
+plot(fit1$res, trainSet$butinosIslaidos)
+lines(lowess(fit1$res, trainSet$butinosIslaidos), col=3, lwd=2)  #visai tiesiskai
+plot(fit1$res, trainSet$pajamos)
+lines(lowess(fit1$res, trainSet$pajamos), col=3, lwd=2)
+```
+  
+**b)**  
+Išryškinome rezultatus su `lowess` funkcija. Man nepanasu, kad butu netiesiskumo, nebent gal eksponentiskuma galima izvelgti.
+```{r}
+fit2 <- lm(trainSet$islaidosVaisiams~I(exp(trainSet$butinosIslaidos))+trainSet$pajamos+factor(trainSet$rajonoId))
+summary(fit2)  #is tiesu, pridejus eksponente butinoms islaidoms, visi kintamieji reiksmingi
+#Šiuo atveju kintamasis jau reikšmingas
+```
+  
+#4 dalis  
+  
+**a)**  
+```{r}
+#Nezinau, kaip suskaiciuoti mse test set, tai lapyginsiu tik train set
+#mse yra saknis is rmse
+mse <- rbind((accuracy(fit1)[2])^2, (accuracy(fit2)[2])^2)
+rownames(modeliu) <- c('fit1', 'fit2')
+colnames(modeliu) <- 'MSE'
+mse
+#fit2 MSE šiek tiek mažesnis
+```
+  
+Palyginimas: antras modelis geresnis pagal training set.
+```{r}
+fitMain <- fit2
+summary(fitMain)
+```
+  
+$$kaina = 2e-16 + 2.51e-05\exp{butinosIslaidos} + 2e-16pajamos + 3.16e-06rajonoId_2 + 1.08e-12rajonoId_3$$ 
+  
+**b)**    
+```{r}
+fitMain2 <- lm(duom2$islaidosVaisiams~I(exp(duom2$butinosIslaidos))+duom2$pajamos+factor(duom2$rajonoId))
+prognoze <- as.vector(predict.lm(fitMain2, , interval='confidence', level=0.80)[,1])[315:392]
+prognoze
+plot(prognoze, testSet$islaidosVaisiams) #x asis - fitMain modelio test set prognoze
+                              #y asis - faktines testSet kainu reiksmes
+```
+  
+**c)**   
+Apie 10%  ??  
+  
+###Užduotis 3 (numatyta 50 taškų)  
+  
+```{r}
+dat <- M1Germany
+head(dat)
+```
+  
+#1 dalis  
+  
+**a)** 
+```{r}
+x_1 <- as.vector(M1Germany$logprice)[1]
+x_N <- as.vector(M1Germany$logprice)[146]
+mu = (x_N/x_1)^(1/146) - 1
+mu
+
+se <- stl(dat$logprice, s.window="periodic", na.action=na.omit)
+sez <- se$time.series[,"seasonal"]  #issaugome seasonal stulpeli
+
+fit1 <- dynlm(dat$logprice ~ L(dat$loggnp, 1)+d(L(dat$loggnp, 2))+sez)
+summary(fit1)  #viskas reikšminga
+```
+  
+**b)**  
+```{r}
+ser <- as.ts(residuals(fit1))
+```
+   
+**c)**  
+```{r}
+plot(ser, col="brown", lwd=2) 
+
+#visu pirma patikrinsime testu:
+adf.test(ser)
+#p-value>0.05, vadinasi Ho priimame, t.y. duomenys nestacionarūs
+kpss.test(ser)
+#p-value<0.05, tikrai nestacionarus
+
+ndiffs(ser)
+#siuloma diferencijuoti 1 karta
+
+ser_dif <- diff(ser, diff=ndiffs(ser))
+plot(ser_dif, col="green")  #panasiau i stacionaruma
+adf.test(ser_dif)
+#p-value<0.05, duomenys stacionarūs
+kpss.test(ser_dif)
+#p-value>0.05, duomenys stacionarius
+
+#Taigi, apsimoka diferencijuoti
+``` 
+
+  
+**d)**  
+Neatrodo naudinga transforfuoti. Pavaizduosime:
+```{r}
+#paziuresime su dar nedirerencijuotais:
+plot(ser, lwd=2)
+l <- BoxCox.lambda(ser) 
+ser_tr <- BoxCox(ser, l)
+plot(ser_tr, col="blue", lwd=2)  #duomenys po transformacijos
+```
+  
+Taigi, matome, kad transformacija visai nenaudinga. Svyravimu problemos Box Cox neisprendzia, duomenys per daug nevienodi.
+
+  
+#1 dalis modeliavimas  
+  
+**a)**  
+```{r}
+mod1 <- ets(ser)
+mod1[13]
+#Gauname ETS(A,N,A) - addictive errors, no trend, additive seasonality
+```
+  
+**b)**  
+```{r}
+#Variantai, kurie pasirode logiski:
+mod_band1 <- ets(ser, model="AAA")
+mod_band2 <- ets(ser, model="AAA", damped=T)
+
+#Pasirinksime pagal AIC:
+aic <- rbind(
+   AIC(mod1),     
+   AIC(mod_band1), 
+   AIC(mod_band2)) 
+colnames(aic) <- "AIC"
+rownames(aic) <- c("mod1", "mod_band1", "mod_band2")
+aic
+#Vis dėlto geriausias yra mod1, jį ir pasiliksime:
+
+mod2 <- mod1
+```
+  
+**c)**  
+```{r}
+mod3 <- auto.arima(ser)
+#Gauname ARIMA(2,1,2)(2,1,2)[4]
+#Pirmi skliauteliai - nesezonine modelio dalis:
+## autoregresines modelio dalies eilė 2
+## diferencijavimo eile - 1
+## moving average modelio dalies eile 2
+## Antri skliauteliai -  tas pats tiesiog jos yra skirtos sezoniniai modelio 
+## daliai aprasyti. Indeksas salia antruju skliaustu reiskia periodu skaiciu per sezona (4).
+```
+  
+Matome, kad  pridedamas sezoniškumas. Siūloma diferencijuoti - sutampa su mano siūlymu.
+  
+**d)**  
+```{r}
+par(mfrow=c(1,2))
+acf(ser_dif)
+pacf(ser_dif) #pabandysime AR(4)
+
+par(mfrow=c(1,1))
+
+mod_band3 <- Arima(ser, order=c(4,1,0), seasonal=c(2,1,2))
+mod_band4 <- Arima(ser, order=c(1,1,0), seasonal=c(2,1,2))
+
+#Pasirinksime pagal accuracy:
+accuracy(mod3)
+accuracy(mod_band3)
+accuracy(mod_band4)
+
+#Skaiciai panasus, reiksmingu skirtumu nera, vis delto pasiliksiu prie auto.arima modelio
+mod4 <- mod3
+```
+  
+#2 dalis  
+  
+**a)**  
+mod1 ir mod2 sutampa, mod3 ir mod4 sutampa => lieka patikrinti mod1 (ets modelis) ir mod3 (arima modelis):
+```{r}
+Acf(residuals(mod1))
+Acf(residuals(mod3))
+#abu panasu, kad baltasis triuksmas
+
+Box.test(residuals(mod1), type="Lj")
+Box.test(residuals(mod3), type="Lj")
+#abiem atvejais p-value>0.05, taigi liekanos yra baltasis triuksmas abieju modeliu
+```
+  
+**b)**  
+```{r}
+trainset <- window(ser, end=c(1985,4))
+testset <- window(ser, start=c(1986,1))
+```
+  
+**c)**  
+```{r}
+mod1_t <- ets(trainset)  #gauname ta pati ETS(A,N,A)
+mod3_t <- auto.arima(trainset)  #gauname ARIMA(1,0,0)(2,1,1)[4]
+```
+  
+**d)**  
+```{r}
+plot(forecast(mod1_t, h=20))
+lines(testset, add=T, col=3)
+legend(1960, -0.18, legend=c("prognoze", "faktines reiksmes"), col=c("blue", "green"), lwd=2, cex=0.8)
+
+plot(forecast(mod3_t, h=20))
+lines(testset, add=T, col=3)
+legend(1960, -0.18, legend=c("prognoze", "faktines reiksmes"), col=c("blue", "green"), lwd=2, cex=0.8)
+
+#geriau atrodo antra prognoze, nes prognozuoja nezymu leidimasi
+```
+  
+**e)**  
+```{r}
+accuracy(forecast(mod1_t, h=20), ser)
+accuracy(forecast(mod3_t, h=20), ser)
+#antras modelis atrodo geresnis pagal dauguma kriteriju
+
+modMain <- mod3_t
+```
+  
+#3 dalis
+```{r}
+
+#nezinau kaip pritaikyt 1+1 iki i+20 tai pritaikysiu visiem:
+length(ser)
+tikslumas<-function(i){
+    subset <- ts(ser[1:i], freq=4)
+    testSet2 <- ts(ser[i:142], freq=4)
+    fit <- auto.arima(subset)
+    ans <- accuracy(fit)[2]
+    return(ans)
+}
+
+#ciklas, kuris uztruks pora minuciu:
+yasis <- vector("numeric", length=142)
+for(i in 1:142) yasis[i] <- tikslumas(i)
+
+xasis <- 1:142
+
+plot(xasis, yasis, type='l', xlab='i', ylab='rmse')
+
+#Matome, kad rmse is pradziu dideja ir veliau , didejant training Set, stabilizuojasi (galbūt dėl to ir reikia training set pasiimti apie 70-80% reiksmiu?)
+```
